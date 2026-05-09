@@ -311,6 +311,18 @@ select option { background:var(--surface2); }
 }
 .profile-avatar-wrap:hover .profile-avatar-overlay { opacity:1; }
 .profile-name { font-family:'Fraunces',serif; font-size:1.2rem; font-weight:500; }
+.profile-name-edit {
+  font-family:'Fraunces',serif; font-size:1.2rem; font-weight:500;
+  background:var(--surface2); border:1px solid var(--accent);
+  border-radius:8px; color:var(--text); text-align:center;
+  padding:.2rem .5rem; width:100%; outline:none;
+}
+.edit-name-btn {
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  font-size:.75rem; margin-top:.2rem; transition:color .2s;
+  font-family:'Outfit',sans-serif;
+}
+.edit-name-btn:hover { color:var(--accent); }
 .profile-email { font-size:.78rem; color:var(--muted); margin-top:.2rem; }
 .profile-url-input { margin-top:1rem; }
 .profile-url-input input { font-size:.8rem; }
@@ -360,6 +372,9 @@ select option { background:var(--surface2); }
 .cal-nav:hover { border-color:var(--accent); color:var(--accent); }
 .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
 .cal-day-name { text-align:center; font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:.4rem 0; }
+.cal-day-name.sunday { color:var(--danger); }
+.cal-day.sunday:not(.other-month):not(.selected) { color:var(--danger); }
+.cal-day.sunday.today { color:var(--danger) !important; }
 .cal-day {
   aspect-ratio:1; display:flex; align-items:center; justify-content:center;
   font-size:.78rem; border-radius:7px; cursor:pointer;
@@ -601,6 +616,7 @@ select option { background:var(--surface2); }
           <div class="profile-avatar-overlay">✏️ Editar</div>
         </div>
         <div class="profile-name" id="profile-name-display">—</div>
+        <button class="edit-name-btn" onclick="toggleEditName()" id="edit-name-toggle">✏️ editar nome</button>
         <div class="profile-email" id="profile-email-display">—</div>
         <div class="profile-url-input">
           <label>URL do avatar (Imgur)</label>
@@ -611,9 +627,11 @@ select option { background:var(--surface2); }
 
       <div class="reminders-card">
         <h3>Lembretes</h3>
-        <div class="reminder-input-row">
-          <input type="text" id="new-reminder" placeholder="Adicionar lembrete…" onkeydown="if(event.key==='Enter')addReminder()" />
-          <button onclick="addReminder()">+</button>
+        <div style="display:flex;flex-direction:column;gap:.4rem;margin-bottom:.8rem">
+          <input type="text" id="new-reminder" placeholder="Título do lembrete…" style="font-size:.85rem;padding:.5rem .8rem" />
+          <input type="date" id="new-reminder-date" style="font-size:.82rem;padding:.45rem .8rem" />
+          <textarea id="new-reminder-obs" rows="2" placeholder="Observação (opcional)…" style="font-size:.82rem;padding:.5rem .8rem;resize:vertical"></textarea>
+          <button onclick="addReminder()" style="background:var(--accent);color:#0d0d0f;border:none;padding:.5rem .9rem;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.background='#d8f870'" onmouseout="this.style.background='var(--accent)'">+ Adicionar</button>
         </div>
         <div class="reminder-list" id="reminder-list"></div>
       </div>
@@ -1049,18 +1067,25 @@ async function loadManage() {
     return;
   }
   list.innerHTML = allCards.map(c => `
-    <div class="card-li">
+    <div class="card-li" data-card-id="${c.id}">
       <span class="card-li-deck">${c.deck}</span>
       <span class="card-li-q">${c.question}</span>
       <span class="card-li-a">${c.answer}</span>
-      <button class="del-btn" onclick="deleteCard('${c.id}')">✕</button>
+      <button class="del-btn" title="Remover carta" onclick="deleteCard('${c.id}')">✕</button>
     </div>`).join('');
 }
 
 async function deleteCard(id) {
-  await sb.from('flashcards').delete().eq('id', id);
+  if (!confirm('Remover esta carta?')) return;
+  const { error } = await sb.from('flashcards').delete().eq('id', id);
+  if (error) { showToast('Erro ao remover carta.'); return; }
+  // Remove from allCards in memory
+  allCards = allCards.filter(c => c.id !== id);
+  // Remove from DOM directly — no reload needed
+  const el = document.querySelector(`[data-card-id="${id}"]`);
+  if (el) el.remove();
+  document.getElementById('total-count').textContent = allCards.length;
   showToast('Carta removida.');
-  loadManage();
 }
 
 // ── PROFILE ──
@@ -1072,6 +1097,9 @@ function loadProfileFromStorage() {
     profileAvatar = data.avatar || '';
     reminders = data.reminders || [];
     userEvents = data.events || {};
+    if (data.displayName) {
+      document.getElementById('greet-name').textContent = data.displayName;
+    }
   } catch { profileAvatar = ''; reminders = []; userEvents = {}; }
   updateAvatarUI();
 }
@@ -1108,8 +1136,12 @@ function saveAvatar() {
 }
 
 function initProfile() {
-  const name = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+  const key = `gustanki_profile_${currentUser.id}`;
+  let savedName = null;
+  try { savedName = (JSON.parse(localStorage.getItem(key)) || {}).displayName; } catch {}
+  const name = savedName || currentUser.user_metadata?.name || currentUser.email.split('@')[0];
   document.getElementById('profile-name-display').textContent = name;
+  document.getElementById('edit-name-toggle').textContent = '✏️ editar nome';
   document.getElementById('profile-email-display').textContent = currentUser.email;
   if (profileAvatar) document.getElementById('avatar-url-input').value = profileAvatar;
   updateAvatarUI();
@@ -1117,14 +1149,52 @@ function initProfile() {
   renderCalendar();
 }
 
+function toggleEditName() {
+  const display = document.getElementById('profile-name-display');
+  const btn = document.getElementById('edit-name-toggle');
+  const existing = display.querySelector('input.profile-name-edit');
+  if (existing) {
+    // save
+    const val = existing.value.trim();
+    if (val) {
+      display.textContent = val;
+      // persist in localStorage
+      const key = `gustanki_profile_${currentUser.id}`;
+      try {
+        const data = JSON.parse(localStorage.getItem(key)) || {};
+        data.displayName = val;
+        localStorage.setItem(key, JSON.stringify(data));
+      } catch {}
+      // update greeting
+      document.getElementById('greet-name').textContent = val;
+    } else {
+      display.textContent = display.dataset.prev || val;
+    }
+    btn.textContent = '✏️ editar nome';
+  } else {
+    // enter edit mode
+    const current = display.textContent;
+    display.dataset.prev = current;
+    display.innerHTML = `<input class="profile-name-edit" value="${current}" onkeydown="if(event.key==='Enter')toggleEditName()" />`;
+    display.querySelector('input').select();
+    btn.textContent = '✓ salvar nome';
+  }
+}
+
 // ── REMINDERS ──
 function addReminder() {
   const input = document.getElementById('new-reminder');
+  const dateInput = document.getElementById('new-reminder-date');
+  const obsInput = document.getElementById('new-reminder-obs');
   const text = input.value.trim();
   if (!text) return;
-  reminders.unshift({ id: Date.now(), text });
+  const date = dateInput.value || null;
+  const obs = obsInput.value.trim() || null;
+  reminders.unshift({ id: Date.now(), text, date, obs });
   saveProfileToStorage();
   input.value = '';
+  dateInput.value = '';
+  obsInput.value = '';
   renderReminders();
 }
 
@@ -1141,12 +1211,19 @@ function renderReminders() {
     list.innerHTML = `<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:.5rem">Sem lembretes.</div>`;
     return;
   }
-  list.innerHTML = reminders.map(r => `
-    <div class="reminder-item">
-      <div class="reminder-dot"></div>
-      <div class="reminder-text">${r.text}</div>
-      <button class="reminder-del" onclick="deleteReminder(${r.id})">✕</button>
-    </div>`).join('');
+  list.innerHTML = reminders.map(r => {
+    const dateLabel = r.date ? `<span style="font-size:.7rem;color:var(--accent2);font-family:'DM Mono',monospace;margin-left:.4rem">📅 ${r.date.split('-').reverse().join('/')}</span>` : '';
+    const obsBlock = r.obs ? `<div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;padding-top:.3rem;border-top:1px solid var(--border);line-height:1.4">${r.obs}</div>` : '';
+    return `
+    <div class="reminder-item" style="flex-direction:column;align-items:stretch">
+      <div style="display:flex;align-items:center;gap:.6rem">
+        <div class="reminder-dot"></div>
+        <div class="reminder-text" style="flex:1;font-weight:500">${r.text}${dateLabel}</div>
+        <button class="reminder-del" onclick="deleteReminder(${r.id})">✕</button>
+      </div>
+      ${obsBlock}
+    </div>`;
+  }).join('');
 }
 
 // ── CALENDAR ──
@@ -1171,7 +1248,7 @@ function renderCalendar() {
   const grid = document.getElementById('cal-grid');
 
   // Day name headers
-  let html = DAYS_PT.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+  let html = DAYS_PT.map((d, i) => `<div class="cal-day-name${i===0?' sunday':''}">${d}</div>`).join('');
 
   const firstDay = new Date(calYear, calMonth, 1).getDay();
   const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
@@ -1189,8 +1266,11 @@ function renderCalendar() {
     const isHoliday = !!holidays[dateStr];
     const hasEvent = !!(userEvents[dateStr]?.length);
     const isSelected = dateStr === selectedCalDate;
+    const dayOfWeek = new Date(calYear, calMonth, d).getDay();
+    const isSunday = dayOfWeek === 0;
     const classes = [
       'cal-day',
+      isSunday ? 'sunday' : '',
       isToday ? 'today' : '',
       isHoliday ? 'holiday' : '',
       hasEvent ? 'event' : '',
