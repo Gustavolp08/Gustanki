@@ -430,6 +430,80 @@ select option { background:var(--surface2); }
   .topbar { padding:.8rem 1rem; }
   .nav-btn { padding:.3rem .6rem; font-size:.8rem; }
 }
+
+/* ── STREAK CARD ── */
+.streak-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.4rem;
+  position:relative; overflow:hidden;
+}
+.streak-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--accent),var(--accent2)); }
+.streak-top { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.2rem; }
+.streak-label { font-size:.7rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:.2rem; }
+.streak-number { font-family:'DM Mono',monospace; font-size:2.6rem; font-weight:500; color:var(--accent); line-height:1; display:flex; align-items:center; gap:.3rem; }
+.streak-fire { font-size:1.8rem; animation:flicker 1.5s ease-in-out infinite alternate; }
+@keyframes flicker { from{transform:scale(1) rotate(-3deg)} to{transform:scale(1.1) rotate(3deg)} }
+.streak-sub { font-size:.72rem; color:var(--muted); margin-top:.2rem; }
+
+/* HEATMAP */
+.heatmap-section { margin-top:.5rem; }
+.heatmap-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.heatmap-title { font-size:.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); }
+.heatmap-legend { display:flex; align-items:center; gap:3px; }
+.hm-leg-cell { width:10px; height:10px; border-radius:2px; }
+.heatmap-months { display:flex; padding-left:28px; margin-bottom:2px; }
+.heatmap-month-label { font-size:.62rem; color:var(--muted); font-family:'DM Mono',monospace; text-align:left; }
+.heatmap-grid-wrap { display:flex; gap:4px; }
+.heatmap-days-label { display:flex; flex-direction:column; justify-content:space-around; padding:2px 0; }
+.heatmap-days-label span { font-size:.6rem; color:var(--muted); font-family:'DM Mono',monospace; line-height:1; height:10px; display:flex; align-items:center; }
+.heatmap-grid { display:grid; grid-auto-flow:column; gap:3px; }
+.hm-cell {
+  width:11px; height:11px; border-radius:2px; cursor:pointer;
+  transition:all .15s; background:var(--surface3);
+}
+.hm-cell:hover { transform:scale(1.3); z-index:2; }
+.hm-cell.l1 { background:rgba(200,240,96,.2); }
+.hm-cell.l2 { background:rgba(200,240,96,.45); }
+.hm-cell.l3 { background:rgba(200,240,96,.7); }
+.hm-cell.l4 { background:var(--accent); box-shadow:0 0 6px rgba(200,240,96,.4); }
+.hm-cell.today-cell { outline:2px solid var(--accent2); outline-offset:1px; }
+.heatmap-tooltip {
+  position:fixed; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:.4rem .7rem; font-size:.75rem; pointer-events:none;
+  z-index:500; opacity:0; transition:opacity .15s; white-space:nowrap;
+  font-family:'DM Mono',monospace; color:var(--text);
+}
+.heatmap-tooltip.visible { opacity:1; }
+
+/* ── RANKING ── */
+.ranking-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.2rem;
+  display:flex; flex-direction:column;
+  position:relative; overflow:hidden;
+}
+.ranking-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--warn),var(--danger)); }
+.ranking-title { font-size:.8rem; font-weight:600; text-transform:uppercase; letter-spacing:.1em; color:var(--warn); margin-bottom:1rem; }
+.ranking-list { display:flex; flex-direction:column; gap:.6rem; flex:1; }
+.ranking-item {
+  display:flex; align-items:center; gap:.7rem;
+  background:var(--surface2); border-radius:10px; padding:.6rem .8rem;
+  border:1px solid var(--border); transition:all .2s;
+}
+.ranking-item:hover { border-color:var(--warn); transform:translateX(2px); }
+.rank-pos { font-family:'DM Mono',monospace; font-size:1rem; font-weight:700; width:24px; text-align:center; }
+.rank-pos.p1 { color:#ffd700; }
+.rank-pos.p2 { color:#c0c0c0; }
+.rank-pos.p3 { color:#cd7f32; }
+.rank-info { flex:1; min-width:0; }
+.rank-name { font-size:.83rem; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rank-streak { font-family:'DM Mono',monospace; font-size:.72rem; color:var(--muted); margin-top:.1rem; }
+.rank-fire { font-size:1.1rem; }
+.ranking-footer { font-size:.67rem; color:var(--border); text-align:center; margin-top:.8rem; }
+
+@media(max-width:700px) {
+  #streak-row { grid-template-columns:1fr !important; }
+}
 </style>
 </head>
 <body>
@@ -480,6 +554,58 @@ select option { background:var(--surface2); }
     <div class="stat-card s3"><div class="stat-label">Dominadas</div><div class="stat-value" id="stat-learned">—</div></div>
     <div class="stat-card s4"><div class="stat-label">Decks</div><div class="stat-value" id="stat-decks">—</div></div>
   </div>
+
+  <!-- Streak + Ranking row -->
+  <div style="display:grid;grid-template-columns:1fr 260px;gap:1rem;margin-bottom:1.5rem" id="streak-row">
+    <!-- Streak card -->
+    <div class="streak-card" id="streak-card">
+      <div class="streak-top">
+        <div>
+          <div class="streak-label">Sequência atual</div>
+          <div class="streak-number"><span id="streak-count">0</span><span class="streak-fire" id="streak-fire">🔥</span></div>
+          <div class="streak-sub">dias consecutivos</div>
+        </div>
+        <div style="text-align:right">
+          <div class="streak-label">Recorde</div>
+          <div style="font-family:'DM Mono',monospace;font-size:1.4rem;color:var(--warn)" id="streak-longest">0</div>
+          <div class="streak-sub">dias</div>
+        </div>
+      </div>
+      <!-- Activity Heatmap -->
+      <div class="heatmap-section">
+        <div class="heatmap-header">
+          <span class="heatmap-title">Atividade — <span id="heatmap-year">2026</span></span>
+          <div class="heatmap-legend">
+            <span style="color:var(--muted);font-size:.68rem">menos</span>
+            <div class="hm-leg-cell" style="background:var(--surface3)"></div>
+            <div class="hm-leg-cell" style="background:rgba(200,240,96,.25)"></div>
+            <div class="hm-leg-cell" style="background:rgba(200,240,96,.5)"></div>
+            <div class="hm-leg-cell" style="background:rgba(200,240,96,.75)"></div>
+            <div class="hm-leg-cell" style="background:var(--accent)"></div>
+            <span style="color:var(--muted);font-size:.68rem">mais</span>
+          </div>
+        </div>
+        <div class="heatmap-months" id="heatmap-months"></div>
+        <div class="heatmap-grid-wrap">
+          <div class="heatmap-days-label">
+            <span>Seg</span><span>Qua</span><span>Sex</span>
+          </div>
+          <div class="heatmap-grid" id="heatmap-grid"></div>
+        </div>
+        <div class="heatmap-tooltip" id="heatmap-tooltip"></div>
+      </div>
+    </div>
+
+    <!-- Ranking -->
+    <div class="ranking-card">
+      <div class="ranking-title">🏆 Top Sequências</div>
+      <div id="ranking-list" class="ranking-list">
+        <div class="loading" style="font-size:.8rem;padding:1rem 0">Carregando…</div>
+      </div>
+      <div class="ranking-footer">atualizado em tempo real</div>
+    </div>
+  </div>
+
   <p class="section-title">Seus decks</p>
   <div class="deck-list" id="deck-list"><div class="loading">Carregando decks…</div></div>
 </div>
@@ -683,6 +809,7 @@ let sessionResults = { correct:0, hard:0, again:0 };
 let profileAvatar = '';
 let reminders = [];
 let userEvents = {}; // key: YYYY-MM-DD, value: [{name}]
+let streakData = { current: 0, longest: 0, lastStudyDate: null, activityLog: {} }; // activityLog: {YYYY-MM-DD: count}
 
 // Calendar state
 let calYear = new Date().getFullYear();
@@ -745,16 +872,23 @@ function fmtDate(d) {
 }
 
 // ── AUTH STATE ──
+let _authInitialized = false;
 sb.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
+    const wasLoggedIn = !!currentUser;
     currentUser = session.user;
     const name = session.user.user_metadata?.name || session.user.email.split('@')[0];
     document.getElementById('greet-name').textContent = name;
     document.getElementById('topbar').style.display = 'flex';
     loadProfileFromStorage();
-    showView('dashboard');
+    // Only navigate to dashboard on first login, not on token refresh
+    if (!wasLoggedIn || !_authInitialized) {
+      showView('dashboard');
+    }
+    _authInitialized = true;
   } else {
     currentUser = null;
+    _authInitialized = false;
     document.getElementById('topbar').style.display = 'none';
     showView('auth');
   }
@@ -812,9 +946,157 @@ async function loadDashboard() {
   document.getElementById('stat-decks').textContent = decks.length;
 
   renderDecks(decks);
+  renderStreakUI();
+  renderHeatmap();
+  loadRanking();
 }
 
-const DECK_EMOJI = { 'Programação':'💻','Matemática':'📐','História':'📜','Idiomas':'🌍','Ciências':'🔬','Geral':'📚' };
+function renderStreakUI() {
+  const el = document.getElementById('streak-count');
+  const longest = document.getElementById('streak-longest');
+  const fire = document.getElementById('streak-fire');
+  if (el) el.textContent = streakData.current || 0;
+  if (longest) longest.textContent = streakData.longest || 0;
+  if (fire) fire.style.display = (streakData.current > 0) ? 'inline' : 'none';
+}
+
+function renderHeatmap() {
+  const grid = document.getElementById('heatmap-grid');
+  const monthsEl = document.getElementById('heatmap-months');
+  const yearEl = document.getElementById('heatmap-year');
+  if (!grid) return;
+
+  const today = new Date();
+  const year = today.getFullYear();
+  yearEl.textContent = year;
+
+  // Build 53 weeks * 7 days = 371 cells, going back from today
+  const todayStr = fmtDate(today);
+  // Start from Jan 1 of this year, padded to Monday
+  const jan1 = new Date(year, 0, 1);
+  const startOffset = (jan1.getDay() + 6) % 7; // days before Jan 1 to fill week (Mon=0)
+  const startDate = new Date(jan1);
+  startDate.setDate(startDate.getDate() - startOffset);
+
+  const endDate = new Date(year, 11, 31);
+  const endOffset = (6 - (endDate.getDay() + 6) % 7);
+  const totalDays = Math.round((endDate - startDate) / 86400000) + 1 + endOffset;
+  const weeks = Math.ceil(totalDays / 7);
+
+  // Find max activity for scaling
+  const log = streakData.activityLog || {};
+  const vals = Object.values(log).filter(v => v > 0);
+  const maxVal = vals.length ? Math.max(...vals) : 1;
+
+  // Month labels
+  let monthHtml = '';
+  let lastMonth = -1;
+  let colIdx = 0;
+  const monthPositions = [];
+  for (let w = 0; w < weeks; w++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + w * 7);
+    const m = d.getMonth();
+    if (m !== lastMonth) {
+      monthPositions.push({ col: w, label: ['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'][m] });
+      lastMonth = m;
+    }
+  }
+
+  // Render month labels with flex
+  monthHtml = monthPositions.map((mp, i) => {
+    const nextCol = monthPositions[i+1]?.col || weeks;
+    const span = nextCol - mp.col;
+    return `<div class="heatmap-month-label" style="width:${span * 14}px;flex-shrink:0">${mp.label}</div>`;
+  }).join('');
+  monthsEl.innerHTML = monthHtml;
+  monthsEl.style.cssText = 'display:flex;padding-left:28px;margin-bottom:2px;gap:0;overflow:hidden';
+
+  // Render cells
+  grid.style.gridTemplateRows = 'repeat(7, 11px)';
+  grid.style.gridAutoColumns = '11px';
+
+  let cellsHtml = '';
+  for (let w = 0; w < weeks; w++) {
+    for (let dow = 0; dow < 7; dow++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + w * 7 + dow);
+      const ds = fmtDate(d);
+      const isThisYear = d.getFullYear() === year;
+      const count = log[ds] || 0;
+      const isToday = ds === todayStr;
+      let level = 0;
+      if (count > 0 && isThisYear) {
+        const ratio = count / maxVal;
+        if (ratio < 0.25) level = 1;
+        else if (ratio < 0.5) level = 2;
+        else if (ratio < 0.75) level = 3;
+        else level = 4;
+      }
+      const cls = `hm-cell${level > 0 ? ' l'+level : ''}${isToday ? ' today-cell' : ''}${!isThisYear ? ' other-year' : ''}`;
+      cellsHtml += `<div class="${cls}" data-date="${ds}" data-count="${count}" onmouseenter="showHmTip(event,'${ds}',${count})" onmouseleave="hideHmTip()"></div>`;
+    }
+  }
+  grid.innerHTML = cellsHtml;
+}
+
+function showHmTip(e, date, count) {
+  const tip = document.getElementById('heatmap-tooltip');
+  const [y,m,d] = date.split('-');
+  const label = count > 0 ? `${count} card${count>1?'s':''} revisados` : 'Sem atividade';
+  tip.textContent = `${d}/${m}/${y} — ${label}`;
+  tip.style.left = (e.clientX + 12) + 'px';
+  tip.style.top = (e.clientY - 36) + 'px';
+  tip.classList.add('visible');
+}
+function hideHmTip() {
+  document.getElementById('heatmap-tooltip')?.classList.remove('visible');
+}
+
+async function loadRanking() {
+  const list = document.getElementById('ranking-list');
+  if (!list) return;
+  // Read all users' streak from their localStorage key via Supabase profiles table (if exists)
+  // Since we store streak in localStorage, we publish current user's streak to Supabase
+  // Using a simple 'streaks' table approach — publish my streak, read top 3
+  try {
+    // Upsert my streak
+    const myName = (() => {
+      try { return (JSON.parse(localStorage.getItem(`gustanki_profile_${currentUser.id}`)) || {}).displayName || currentUser.email.split('@')[0]; } catch { return currentUser.email.split('@')[0]; }
+    })();
+    await sb.from('streaks').upsert({
+      user_id: currentUser.id,
+      display_name: myName,
+      current_streak: streakData.current || 0,
+      longest_streak: streakData.longest || 0,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+
+    // Fetch top 3
+    const { data } = await sb.from('streaks').select('*').order('current_streak', { ascending: false }).limit(3);
+    if (!data || !data.length) {
+      list.innerHTML = `<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:1rem">Nenhum dado ainda.</div>`;
+      return;
+    }
+    const medals = ['🥇','🥈','🥉'];
+    const posClass = ['p1','p2','p3'];
+    list.innerHTML = data.map((row, i) => {
+      const isMe = row.user_id === currentUser.id;
+      return `
+      <div class="ranking-item" style="${isMe ? 'border-color:rgba(200,240,96,.4);background:rgba(200,240,96,.05)' : ''}">
+        <div class="rank-pos ${posClass[i]}">${medals[i]}</div>
+        <div class="rank-info">
+          <div class="rank-name">${row.display_name}${isMe ? ' <span style="font-size:.65rem;color:var(--accent)">(você)</span>' : ''}</div>
+          <div class="rank-streak">${row.current_streak} dia${row.current_streak !== 1 ? 's' : ''} seguidos</div>
+        </div>
+        <div class="rank-fire">${row.current_streak > 0 ? '🔥' : '💤'}</div>
+      </div>`;
+    }).join('');
+  } catch(err) {
+    // Table may not exist yet — show graceful fallback
+    list.innerHTML = `<div style="font-size:.75rem;color:var(--muted);padding:.5rem;line-height:1.5">Crie a tabela <code>streaks</code> no Supabase para ativar o ranking.</div>`;
+  }
+}
 const DECK_COLOR = { 'Programação':'rgba(96,208,240,.15)','Matemática':'rgba(200,240,96,.15)','História':'rgba(240,184,96,.15)','Idiomas':'rgba(96,240,160,.15)','Ciências':'rgba(240,96,240,.15)','Geral':'rgba(200,200,200,.08)' };
 
 function deckEmoji(name) {
@@ -934,6 +1216,7 @@ async function rateCard(rating) {
   if (idx >= 0) Object.assign(allCards[idx], { interval, ease, reviews: reviews+1, due_at });
 
   studyIndex++;
+  recordStudyActivity();
   setTimeout(loadCard, 80);
 }
 
@@ -1097,17 +1380,20 @@ function loadProfileFromStorage() {
     profileAvatar = data.avatar || '';
     reminders = data.reminders || [];
     userEvents = data.events || {};
+    streakData = data.streak || { current: 0, longest: 0, lastStudyDate: null, activityLog: {} };
     if (data.displayName) {
       document.getElementById('greet-name').textContent = data.displayName;
     }
-  } catch { profileAvatar = ''; reminders = []; userEvents = {}; }
+    // Check if streak should be broken (missed yesterday or earlier)
+    checkStreakBreak();
+  } catch { profileAvatar = ''; reminders = []; userEvents = {}; streakData = { current:0, longest:0, lastStudyDate:null, activityLog:{} }; }
   updateAvatarUI();
 }
 
 function saveProfileToStorage() {
   if (!currentUser) return;
   const key = `gustanki_profile_${currentUser.id}`;
-  localStorage.setItem(key, JSON.stringify({ avatar: profileAvatar, reminders, events: userEvents }));
+  localStorage.setItem(key, JSON.stringify({ avatar: profileAvatar, reminders, events: userEvents, streak: streakData }));
 }
 
 function updateAvatarUI() {
@@ -1224,6 +1510,52 @@ function renderReminders() {
       ${obsBlock}
     </div>`;
   }).join('');
+}
+
+// ── STREAK ──
+function checkStreakBreak() {
+  if (!streakData.lastStudyDate) return;
+  const today = fmtDate(new Date());
+  const last = streakData.lastStudyDate;
+  if (last === today) return; // studied today, fine
+  // Calculate days between last study and today
+  const lastD = new Date(last + 'T00:00:00');
+  const todayD = new Date(today + 'T00:00:00');
+  const diff = Math.round((todayD - lastD) / 86400000);
+  if (diff > 1) {
+    // Missed at least one day — break streak
+    streakData.current = 0;
+    saveProfileToStorage();
+  }
+}
+
+function recordStudyActivity() {
+  const today = fmtDate(new Date());
+  streakData.activityLog = streakData.activityLog || {};
+  streakData.activityLog[today] = (streakData.activityLog[today] || 0) + 1;
+  const last = streakData.lastStudyDate;
+  if (last !== today) {
+    if (last) {
+      const lastD = new Date(last + 'T00:00:00');
+      const todayD = new Date(today + 'T00:00:00');
+      const diff = Math.round((todayD - lastD) / 86400000);
+      if (diff === 1) {
+        streakData.current++;
+      } else {
+        streakData.current = 1;
+      }
+    } else {
+      streakData.current = 1;
+    }
+    streakData.lastStudyDate = today;
+    if (streakData.current > (streakData.longest || 0)) {
+      streakData.longest = streakData.current;
+    }
+  }
+  saveProfileToStorage();
+  // Update streak display if visible
+  const el = document.getElementById('streak-count');
+  if (el) el.textContent = streakData.current;
 }
 
 // ── CALENDAR ──
