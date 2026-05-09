@@ -3,675 +3,393 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MemoCard — Sistema de Repetição Espaçada</title>
+<title>Gustanki — Flashcards</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,300&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --bg: #0d0d0f;
-    --surface: #161618;
-    --surface2: #1e1e22;
-    --surface3: #27272c;
-    --border: #2e2e34;
-    --text: #f0ede8;
-    --muted: #8a8791;
-    --accent: #c8f060;
-    --accent2: #60d0f0;
-    --danger: #f06060;
-    --warn: #f0b860;
-    --good: #60f0a0;
-    --card-radius: 20px;
-  }
-
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Outfit', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* TOPBAR */
-  .topbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 2rem;
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 100;
-  }
-
-  .logo {
-    font-family: 'Fraunces', serif;
-    font-size: 1.4rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .logo span { color: var(--accent); }
-
-  .nav-links {
-    display: flex;
-    gap: 0.5rem;
-  }
-
-  .nav-btn {
-    background: none;
-    border: 1px solid transparent;
-    color: var(--muted);
-    padding: 0.4rem 1rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.9rem;
-    transition: all 0.2s;
-  }
-
-  .nav-btn:hover, .nav-btn.active {
-    background: var(--surface2);
-    color: var(--text);
-    border-color: var(--border);
-  }
-
-  /* VIEWS */
-  .view { display: none; padding: 2rem; max-width: 900px; margin: 0 auto; }
-  .view.active { display: block; }
-
-  /* DASHBOARD */
-  .greeting {
-    font-family: 'Fraunces', serif;
-    font-size: 2.2rem;
-    font-weight: 300;
-    margin-bottom: 0.3rem;
-    line-height: 1.2;
-  }
-
-  .greeting em { font-style: italic; color: var(--accent); }
-
-  .subtitle {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-bottom: 2.5rem;
-  }
-
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-    margin-bottom: 2.5rem;
-  }
-
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--card-radius);
-    padding: 1.25rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-
-  .stat-card.new::before { background: var(--accent2); }
-  .stat-card.review::before { background: var(--accent); }
-  .stat-card.learned::before { background: var(--good); }
-  .stat-card.streak::before { background: var(--warn); }
-
-  .stat-label {
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-value {
-    font-family: 'DM Mono', monospace;
-    font-size: 2rem;
-    font-weight: 500;
-    line-height: 1;
-  }
-
-  .stat-card.new .stat-value { color: var(--accent2); }
-  .stat-card.review .stat-value { color: var(--accent); }
-  .stat-card.learned .stat-value { color: var(--good); }
-  .stat-card.streak .stat-value { color: var(--warn); }
-
-  /* DECK LIST */
-  .section-title {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 1rem;
-  }
-
-  .deck-list { display: flex; flex-direction: column; gap: 0.75rem; }
-
-  .deck-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .deck-item:hover {
-    background: var(--surface2);
-    border-color: #3a3a42;
-    transform: translateY(-1px);
-  }
-
-  .deck-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.2rem;
-    flex-shrink: 0;
-  }
-
-  .deck-info { flex: 1; }
-
-  .deck-name {
-    font-weight: 500;
-    font-size: 0.95rem;
-    margin-bottom: 0.2rem;
-  }
-
-  .deck-meta {
-    font-size: 0.8rem;
-    color: var(--muted);
-    font-family: 'DM Mono', monospace;
-  }
-
-  .deck-counts {
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-  }
-
-  .count-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 6px;
-    font-weight: 500;
-  }
-
-  .badge-new { background: rgba(96,208,240,0.15); color: var(--accent2); }
-  .badge-review { background: rgba(200,240,96,0.15); color: var(--accent); }
-
-  .study-btn-small {
-    background: var(--accent);
-    color: #0d0d0f;
-    border: none;
-    padding: 0.4rem 1rem;
-    border-radius: 8px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    white-space: nowrap;
-  }
-
-  .study-btn-small:hover { background: #d8f870; transform: scale(1.02); }
-
-  /* STUDY VIEW */
-  .study-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 2rem;
-  }
-
-  .back-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.4rem 0.9rem;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.85rem;
-    transition: all 0.15s;
-  }
-
-  .back-btn:hover { background: var(--surface3); }
-
-  .progress-bar-wrap {
-    flex: 1;
-    margin: 0 1.5rem;
-    height: 4px;
-    background: var(--surface3);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .progress-bar-fill {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.4s ease;
-  }
-
-  .card-counter {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.82rem;
-    color: var(--muted);
-  }
-
-  /* FLASHCARD */
-  .flashcard-wrap {
-    perspective: 1200px;
-    margin-bottom: 2rem;
-  }
-
-  .flashcard {
-    width: 100%;
-    min-height: 340px;
-    position: relative;
-    transform-style: preserve-3d;
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    cursor: pointer;
-  }
-
-  .flashcard.flipped { transform: rotateY(180deg); }
-
-  .card-face {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    min-height: 340px;
-    backface-visibility: hidden;
-    border-radius: var(--card-radius);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2.5rem;
-    text-align: center;
-    border: 1px solid var(--border);
-  }
-
-  .card-front {
-    background: var(--surface);
-  }
-
-  .card-back {
-    background: var(--surface);
-    transform: rotateY(180deg);
-    border-color: rgba(200,240,96,0.3);
-  }
-
-  .card-tag {
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    margin-bottom: 1.5rem;
-    padding: 0.25rem 0.75rem;
-    border: 1px solid var(--border);
-    border-radius: 20px;
-  }
-
-  .card-question {
-    font-family: 'Fraunces', serif;
-    font-size: 1.8rem;
-    font-weight: 300;
-    line-height: 1.3;
-    color: var(--text);
-  }
-
-  .card-answer {
-    font-size: 1.5rem;
-    font-weight: 400;
-    line-height: 1.4;
-    color: var(--accent);
-    margin-bottom: 1rem;
-  }
-
-  .card-explanation {
-    font-size: 0.9rem;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-top: 1rem;
-    max-width: 500px;
-  }
-
-  .flip-hint {
-    position: absolute;
-    bottom: 1.2rem;
-    font-size: 0.75rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-  }
-
-  .flip-hint kbd {
-    background: var(--surface3);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 0.1rem 0.4rem;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--text);
-  }
-
-  /* RATING BUTTONS */
-  .rating-section {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    animation: fadeUp 0.3s ease;
-  }
-
-  .rating-section.visible { display: flex; }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .rating-label {
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-  }
-
-  .rating-buttons {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
-    width: 100%;
-  }
-
-  .rate-btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.9rem;
-    cursor: pointer;
-    font-family: 'Outfit', sans-serif;
-    transition: all 0.2s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  .rate-btn .rate-emoji { font-size: 1.4rem; }
-
-  .rate-btn .rate-label {
-    font-size: 0.82rem;
-    font-weight: 500;
-    color: var(--text);
-  }
-
-  .rate-btn .rate-time {
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-  }
-
-  .rate-btn:hover { transform: translateY(-2px); }
-
-  .rate-btn.again:hover { background: rgba(240,96,96,0.15); border-color: var(--danger); }
-  .rate-btn.hard:hover { background: rgba(240,184,96,0.15); border-color: var(--warn); }
-  .rate-btn.good:hover { background: rgba(200,240,96,0.15); border-color: var(--accent); }
-  .rate-btn.easy:hover { background: rgba(96,240,160,0.15); border-color: var(--good); }
-
-  /* COMPLETE SCREEN */
-  .complete-screen {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 400px;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .complete-screen.visible { display: flex; }
-
-  .complete-icon {
-    font-size: 4rem;
-    margin-bottom: 0.5rem;
-    animation: bounce 0.6s ease;
-  }
-
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-12px); }
-  }
-
-  .complete-title {
-    font-family: 'Fraunces', serif;
-    font-size: 2rem;
-    font-weight: 300;
-  }
-
-  .complete-title em { font-style: italic; color: var(--accent); }
-
-  .complete-stats {
-    display: flex;
-    gap: 2rem;
-    margin: 1rem 0;
-    font-family: 'DM Mono', monospace;
-  }
-
-  .complete-stat { text-align: center; }
-  .complete-stat .val { font-size: 1.8rem; font-weight: 500; color: var(--accent); }
-  .complete-stat .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
-
-  /* ADD CARD VIEW */
-  .form-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--card-radius);
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .form-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.4rem;
-    font-weight: 300;
-    margin-bottom: 1.5rem;
-  }
-
-  .form-group {
-    margin-bottom: 1.25rem;
-  }
-
-  label {
-    display: block;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 0.5rem;
-  }
-
-  input, textarea, select {
-    width: 100%;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    padding: 0.7rem 0.9rem;
-    transition: border-color 0.2s;
-    outline: none;
-    resize: vertical;
-  }
-
-  input:focus, textarea:focus, select:focus {
-    border-color: var(--accent);
-  }
-
-  select option { background: var(--surface2); }
-
-  .btn-primary {
-    background: var(--accent);
-    color: #0d0d0f;
-    border: none;
-    padding: 0.7rem 1.8rem;
-    border-radius: 10px;
-    font-family: 'Outfit', sans-serif;
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-primary:hover { background: #d8f870; transform: scale(1.01); }
-
-  /* CARDS LIST */
-  .cards-list { display: flex; flex-direction: column; gap: 0.6rem; }
-
-  .card-list-item {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.9rem 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .card-list-q { flex: 1; font-size: 0.9rem; }
-  .card-list-a { color: var(--accent); font-size: 0.85rem; font-family: 'DM Mono', monospace; }
-
-  .delete-btn {
-    background: none;
-    border: none;
-    color: var(--muted);
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0.2rem 0.4rem;
-    border-radius: 6px;
-    transition: all 0.2s;
-  }
-
-  .delete-btn:hover { color: var(--danger); background: rgba(240,96,96,0.1); }
-
-  /* EMPTY STATE */
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--muted);
-  }
-
-  .empty-state .big { font-size: 3rem; margin-bottom: 1rem; }
-  .empty-state p { font-size: 0.9rem; line-height: 1.6; }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 2rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.7rem 1.5rem;
-    font-size: 0.88rem;
-    z-index: 999;
-    transition: transform 0.3s ease;
-  }
-
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  /* RESPONSIVE */
-  @media (max-width: 600px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .rating-buttons { grid-template-columns: repeat(2, 1fr); }
-    .view { padding: 1rem; }
-    .card-question { font-size: 1.4rem; }
-  }
+:root {
+  --bg: #0d0d0f;
+  --surface: #161618;
+  --surface2: #1e1e22;
+  --surface3: #27272c;
+  --border: #2e2e34;
+  --text: #f0ede8;
+  --muted: #8a8791;
+  --accent: #c8f060;
+  --accent2: #60d0f0;
+  --danger: #f06060;
+  --warn: #f0b860;
+  --good: #60f0a0;
+  --radius: 16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
+
+/* ── TOPBAR ── */
+.topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:.9rem 2rem; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--bg); z-index:100;
+}
+.logo { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:700; letter-spacing:-.02em; }
+.logo span { color:var(--accent); }
+.nav-links { display:flex; gap:.4rem; }
+.nav-btn {
+  background:none; border:1px solid transparent; color:var(--muted);
+  padding:.35rem .9rem; border-radius:8px; cursor:pointer;
+  font-family:'Outfit',sans-serif; font-size:.88rem; transition:all .2s;
+}
+.nav-btn:hover,.nav-btn.active { background:var(--surface2); color:var(--text); border-color:var(--border); }
+.user-chip {
+  display:flex; align-items:center; gap:.5rem;
+  font-size:.82rem; color:var(--muted);
+}
+.avatar {
+  width:30px; height:30px; border-radius:50%;
+  background:rgba(200,240,96,.2); color:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:600;
+}
+.logout-btn {
+  background:none; border:1px solid var(--border); color:var(--muted);
+  padding:.25rem .7rem; border-radius:7px; cursor:pointer;
+  font-family:'Outfit',sans-serif; font-size:.78rem; transition:all .2s;
+}
+.logout-btn:hover { border-color:var(--danger); color:var(--danger); }
+
+/* ── VIEWS ── */
+.view { display:none; padding:2rem; max-width:900px; margin:0 auto; }
+.view.active { display:block; }
+
+/* ── AUTH ── */
+#view-auth {
+  display:none; max-width:420px; margin:4rem auto; padding:2rem;
+}
+#view-auth.active { display:block; }
+.auth-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:2.5rem;
+}
+.auth-title { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:300; margin-bottom:.3rem; }
+.auth-title em { font-style:italic; color:var(--accent); }
+.auth-sub { font-size:.85rem; color:var(--muted); margin-bottom:2rem; }
+.form-group { margin-bottom:1.1rem; }
+label { display:block; font-size:.75rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.4rem; }
+input, textarea, select {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; color:var(--text); font-family:'Outfit',sans-serif;
+  font-size:.95rem; padding:.65rem .9rem; transition:border-color .2s; outline:none; resize:vertical;
+}
+input:focus, textarea:focus, select:focus { border-color:var(--accent); }
+select option { background:var(--surface2); }
+.btn-primary {
+  width:100%; background:var(--accent); color:#0d0d0f;
+  border:none; padding:.75rem; border-radius:10px;
+  font-family:'Outfit',sans-serif; font-weight:600; font-size:.95rem;
+  cursor:pointer; transition:all .2s; margin-top:.5rem;
+}
+.btn-primary:hover { background:#d8f870; }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.auth-toggle { text-align:center; margin-top:1.2rem; font-size:.85rem; color:var(--muted); }
+.auth-toggle a { color:var(--accent); cursor:pointer; text-decoration:none; }
+.auth-error {
+  background:rgba(240,96,96,.1); border:1px solid rgba(240,96,96,.3);
+  color:var(--danger); border-radius:8px; padding:.6rem .9rem;
+  font-size:.83rem; margin-bottom:1rem; display:none;
+}
+
+/* ── DASHBOARD ── */
+.greeting { font-family:'Fraunces',serif; font-size:2rem; font-weight:300; margin-bottom:.3rem; }
+.greeting em { font-style:italic; color:var(--accent); }
+.subtitle { color:var(--muted); font-size:.92rem; margin-bottom:2rem; }
+.stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:.9rem; margin-bottom:2rem; }
+.stat-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.1rem; position:relative; overflow:hidden;
+}
+.stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.stat-card.s1::before { background:var(--accent2); }
+.stat-card.s2::before { background:var(--accent); }
+.stat-card.s3::before { background:var(--good); }
+.stat-card.s4::before { background:var(--warn); }
+.stat-label { font-size:.73rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:.4rem; }
+.stat-value { font-family:'DM Mono',monospace; font-size:1.9rem; font-weight:500; line-height:1; }
+.stat-card.s1 .stat-value { color:var(--accent2); }
+.stat-card.s2 .stat-value { color:var(--accent); }
+.stat-card.s3 .stat-value { color:var(--good); }
+.stat-card.s4 .stat-value { color:var(--warn); }
+.section-title { font-size:.75rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:.9rem; }
+
+/* DECK LIST */
+.deck-list { display:flex; flex-direction:column; gap:.7rem; }
+.deck-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:.9rem 1.1rem;
+  display:flex; align-items:center; gap:.9rem;
+  cursor:pointer; transition:all .2s;
+}
+.deck-item:hover { background:var(--surface2); border-color:#3a3a42; transform:translateY(-1px); }
+.deck-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+.deck-info { flex:1; }
+.deck-name { font-weight:500; font-size:.92rem; margin-bottom:.15rem; }
+.deck-meta { font-size:.77rem; color:var(--muted); font-family:'DM Mono',monospace; }
+.deck-counts { display:flex; gap:.4rem; align-items:center; }
+.count-badge { font-family:'DM Mono',monospace; font-size:.72rem; padding:.18rem .45rem; border-radius:6px; font-weight:500; }
+.badge-new { background:rgba(96,208,240,.15); color:var(--accent2); }
+.badge-rev { background:rgba(200,240,96,.15); color:var(--accent); }
+.study-btn-sm {
+  background:var(--accent); color:#0d0d0f; border:none;
+  padding:.35rem .9rem; border-radius:8px;
+  font-family:'Outfit',sans-serif; font-weight:600; font-size:.8rem;
+  cursor:pointer; transition:all .2s; white-space:nowrap;
+}
+.study-btn-sm:hover { background:#d8f870; }
+
+/* ── STUDY VIEW ── */
+.study-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.8rem; }
+.back-btn {
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:.35rem .85rem; border-radius:8px; cursor:pointer;
+  font-family:'Outfit',sans-serif; font-size:.83rem; transition:all .15s;
+}
+.back-btn:hover { background:var(--surface3); }
+.progress-wrap { flex:1; margin:0 1.2rem; height:4px; background:var(--surface3); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width .4s ease; }
+.card-counter { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--muted); }
+
+/* FLASHCARD */
+.flashcard-wrap { perspective:1200px; margin-bottom:1.8rem; }
+.flashcard {
+  width:100%; min-height:340px; position:relative;
+  transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,0,.2,1); cursor:pointer;
+}
+.flashcard.flipped { transform:rotateY(180deg); }
+.card-face {
+  position:absolute; top:0; left:0; right:0; bottom:0; min-height:340px;
+  backface-visibility:hidden; border-radius:var(--radius);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  padding:2.2rem; text-align:center; border:1px solid var(--border);
+}
+.card-front { background:var(--surface); }
+.card-back { background:var(--surface); transform:rotateY(180deg); border-color:rgba(200,240,96,.3); }
+.card-tag {
+  font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted);
+  margin-bottom:1.2rem; padding:.22rem .7rem; border:1px solid var(--border); border-radius:20px;
+}
+.card-question { font-family:'Fraunces',serif; font-size:1.7rem; font-weight:300; line-height:1.3; }
+.card-answer { font-size:1.4rem; font-weight:400; line-height:1.4; color:var(--accent); }
+.card-explanation { font-size:.88rem; color:var(--muted); line-height:1.6; margin-top:.9rem; max-width:500px; }
+
+/* CARD IMAGE */
+.card-img-wrap {
+  margin:.9rem 0; cursor:zoom-in;
+  border-radius:10px; overflow:hidden;
+  border:1px solid var(--border);
+  max-width:320px; width:100%;
+}
+.card-img-wrap img {
+  width:100%; height:180px; object-fit:cover; display:block;
+  transition:opacity .2s;
+}
+.card-img-wrap:hover img { opacity:.85; }
+
+/* LIGHTBOX */
+.lightbox {
+  display:none; position:fixed; inset:0; z-index:999;
+  background:rgba(0,0,0,.85); align-items:center; justify-content:center;
+}
+.lightbox.open { display:flex; }
+.lightbox img {
+  max-width:90vw; max-height:90vh; object-fit:contain;
+  border-radius:10px; border:1px solid var(--border);
+  cursor:zoom-out;
+}
+.lightbox-close {
+  position:absolute; top:1.5rem; right:1.5rem;
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  width:36px; height:36px; border-radius:50%; font-size:1.1rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+}
+
+/* FLIP HINT */
+.flip-hint { position:absolute; bottom:1.1rem; font-size:.72rem; color:var(--muted); display:flex; align-items:center; gap:.35rem; }
+.flip-hint kbd {
+  background:var(--surface3); border:1px solid var(--border); border-radius:4px;
+  padding:.08rem .38rem; font-family:'DM Mono',monospace; font-size:.68rem; color:var(--text);
+}
+
+/* RATING */
+.rating-section { display:none; flex-direction:column; align-items:center; gap:.9rem; }
+.rating-section.visible { display:flex; animation:fadeUp .3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+.rating-label { font-size:.77rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+.rating-buttons { display:grid; grid-template-columns:repeat(4,1fr); gap:.7rem; width:100%; }
+.rate-btn {
+  background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+  padding:.85rem; cursor:pointer; font-family:'Outfit',sans-serif;
+  transition:all .2s; display:flex; flex-direction:column; align-items:center; gap:.25rem;
+}
+.rate-btn .re { font-size:1.3rem; }
+.rate-btn .rl { font-size:.8rem; font-weight:500; color:var(--text); }
+.rate-btn .rt { font-family:'DM Mono',monospace; font-size:.7rem; color:var(--muted); }
+.rate-btn:hover { transform:translateY(-2px); }
+.rate-btn.again:hover { background:rgba(240,96,96,.15); border-color:var(--danger); }
+.rate-btn.hard:hover { background:rgba(240,184,96,.15); border-color:var(--warn); }
+.rate-btn.good:hover { background:rgba(200,240,96,.15); border-color:var(--accent); }
+.rate-btn.easy:hover { background:rgba(96,240,160,.15); border-color:var(--good); }
+
+/* COMPLETE */
+.complete-screen { display:none; flex-direction:column; align-items:center; justify-content:center; min-height:380px; text-align:center; gap:.9rem; }
+.complete-screen.visible { display:flex; }
+.complete-icon { font-size:3.5rem; animation:bounce .6s ease; }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.complete-title { font-family:'Fraunces',serif; font-size:1.9rem; font-weight:300; }
+.complete-title em { font-style:italic; color:var(--accent); }
+.complete-stats { display:flex; gap:2rem; margin:.8rem 0; font-family:'DM Mono',monospace; }
+.cs { text-align:center; }
+.cs .val { font-size:1.7rem; font-weight:500; color:var(--accent); }
+.cs .lbl { font-size:.72rem; color:var(--muted); margin-top:.15rem; }
+.btn-outline {
+  background:none; border:1px solid var(--border); color:var(--text);
+  padding:.65rem 1.6rem; border-radius:10px;
+  font-family:'Outfit',sans-serif; font-weight:500; font-size:.9rem;
+  cursor:pointer; transition:all .2s;
+}
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── ADD VIEW ── */
+.form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; margin-bottom:1.5rem; }
+.form-title { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:300; margin-bottom:1.5rem; }
+.form-title em { font-style:italic; color:var(--accent); }
+.btn-submit {
+  background:var(--accent); color:#0d0d0f; border:none;
+  padding:.65rem 1.6rem; border-radius:10px;
+  font-family:'Outfit',sans-serif; font-weight:600; font-size:.92rem;
+  cursor:pointer; transition:all .2s;
+}
+.btn-submit:hover { background:#d8f870; }
+.btn-submit:disabled { opacity:.5; cursor:not-allowed; }
+.img-preview { margin-top:.6rem; display:none; }
+.img-preview img { width:100%; max-width:280px; height:140px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+
+/* ── MANAGE VIEW ── */
+.manage-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; }
+.cards-list { display:flex; flex-direction:column; gap:.55rem; }
+.card-li {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:.85rem 1.1rem;
+  display:flex; align-items:center; gap:.9rem;
+}
+.card-li-deck { font-size:.68rem; color:var(--muted); border:1px solid var(--border); border-radius:5px; padding:.18rem .45rem; white-space:nowrap; }
+.card-li-q { flex:1; font-size:.88rem; }
+.card-li-a { color:var(--accent); font-size:.82rem; font-family:'DM Mono',monospace; max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.del-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.95rem; padding:.2rem .4rem; border-radius:6px; transition:all .2s; }
+.del-btn:hover { color:var(--danger); background:rgba(240,96,96,.1); }
+
+/* EMPTY */
+.empty-state { text-align:center; padding:3rem 1rem; color:var(--muted); }
+.empty-state .big { font-size:3rem; margin-bottom:.8rem; }
+.empty-state p { font-size:.88rem; line-height:1.6; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:2rem; left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:.65rem 1.4rem;
+  font-size:.86rem; z-index:9999; transition:transform .3s ease;
+  pointer-events:none;
+}
+.toast.show { transform:translateX(-50%) translateY(0); }
+
+/* LOADING */
+.loading { text-align:center; padding:3rem; color:var(--muted); font-size:.9rem; }
+
+@media(max-width:600px) {
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .rating-buttons { grid-template-columns:repeat(2,1fr); }
+  .view { padding:1rem; }
+  .card-question { font-size:1.3rem; }
+  .topbar { padding:.8rem 1rem; }
+}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="logo">Memo<span>Card</span></div>
+<!-- TOPBAR -->
+<div class="topbar" id="topbar" style="display:none">
+  <div class="logo">Gust<span>anki</span></div>
   <nav class="nav-links">
     <button class="nav-btn active" onclick="showView('dashboard')">Início</button>
     <button class="nav-btn" onclick="showView('add')">Adicionar</button>
     <button class="nav-btn" onclick="showView('manage')">Gerenciar</button>
   </nav>
+  <div class="user-chip">
+    <div class="avatar" id="user-avatar">?</div>
+    <button class="logout-btn" onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<!-- AUTH -->
+<div class="view" id="view-auth">
+  <div class="auth-card">
+    <div class="auth-title">Gust<em>anki</em></div>
+    <div class="auth-sub">Entre com suas credenciais para continuar.</div>
+    <div class="auth-error" id="auth-error"></div>
+
+    <div id="auth-login-form">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')login()" />
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()" />
+      </div>
+      <button class="btn-primary" onclick="login()" id="login-btn">Entrar</button>
+    </div>
+  </div>
 </div>
 
 <!-- DASHBOARD -->
-<div class="view active" id="view-dashboard">
-  <p class="greeting">Bom dia, <em>estudante.</em></p>
+<div class="view" id="view-dashboard">
+  <p class="greeting">Olá, <em id="greet-name">estudante</em>.</p>
   <p class="subtitle">Seu progresso está guardado. Continue de onde parou.</p>
-
   <div class="stats-grid">
-    <div class="stat-card new">
-      <div class="stat-label">Novos hoje</div>
-      <div class="stat-value" id="stat-new">0</div>
-    </div>
-    <div class="stat-card review">
-      <div class="stat-label">Para revisar</div>
-      <div class="stat-value" id="stat-review">0</div>
-    </div>
-    <div class="stat-card learned">
-      <div class="stat-label">Dominados</div>
-      <div class="stat-value" id="stat-learned">0</div>
-    </div>
-    <div class="stat-card streak">
-      <div class="stat-label">🔥 Sequência</div>
-      <div class="stat-value" id="stat-streak">1</div>
-    </div>
+    <div class="stat-card s1"><div class="stat-label">Total de cartas</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card s2"><div class="stat-label">Para revisar</div><div class="stat-value" id="stat-due">—</div></div>
+    <div class="stat-card s3"><div class="stat-label">Dominadas</div><div class="stat-value" id="stat-learned">—</div></div>
+    <div class="stat-card s4"><div class="stat-label">Decks</div><div class="stat-value" id="stat-decks">—</div></div>
   </div>
-
   <p class="section-title">Seus decks</p>
-  <div class="deck-list" id="deck-list"></div>
+  <div class="deck-list" id="deck-list"><div class="loading">Carregando decks…</div></div>
 </div>
 
-<!-- STUDY VIEW -->
+<!-- STUDY -->
 <div class="view" id="view-study">
   <div class="study-header">
     <button class="back-btn" onclick="showView('dashboard')">← Voltar</button>
-    <div class="progress-bar-wrap">
-      <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
-    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
     <div class="card-counter" id="card-counter">0 / 0</div>
   </div>
 
-  <!-- Active study -->
   <div id="study-content">
     <div class="flashcard-wrap">
       <div class="flashcard" id="flashcard" onclick="flipCard()">
         <div class="card-face card-front">
           <div class="card-tag" id="card-deck-tag">DECK</div>
-          <div class="card-question" id="card-question">Pergunta aqui</div>
+          <div class="card-question" id="card-question">Pergunta</div>
+          <div class="card-img-wrap" id="front-img-wrap" style="display:none">
+            <img id="front-img" src="" alt="imagem" onclick="openLightbox(event,this.src)" />
+          </div>
           <div class="flip-hint">Clique para ver a resposta &nbsp;<kbd>Espaço</kbd></div>
         </div>
         <div class="card-face card-back">
           <div class="card-tag" id="card-deck-tag-back">DECK</div>
-          <div class="card-answer" id="card-answer">Resposta aqui</div>
+          <div class="card-answer" id="card-answer">Resposta</div>
+          <div class="card-img-wrap" id="back-img-wrap" style="display:none">
+            <img id="back-img" src="" alt="imagem" onclick="openLightbox(event,this.src)" />
+          </div>
           <div class="card-explanation" id="card-explanation"></div>
         </div>
       </div>
@@ -680,260 +398,268 @@
     <div class="rating-section" id="rating-section">
       <div class="rating-label">Como foi desta vez?</div>
       <div class="rating-buttons">
-        <button class="rate-btn again" onclick="rateCard('again')">
-          <span class="rate-emoji">😖</span>
-          <span class="rate-label">Errei</span>
-          <span class="rate-time">~1 min</span>
-        </button>
-        <button class="rate-btn hard" onclick="rateCard('hard')">
-          <span class="rate-emoji">😓</span>
-          <span class="rate-label">Difícil</span>
-          <span class="rate-time">~10 min</span>
-        </button>
-        <button class="rate-btn good" onclick="rateCard('good')">
-          <span class="rate-emoji">😊</span>
-          <span class="rate-label">Bom</span>
-          <span class="rate-time">~1 dia</span>
-        </button>
-        <button class="rate-btn easy" onclick="rateCard('easy')">
-          <span class="rate-emoji">🤩</span>
-          <span class="rate-label">Fácil</span>
-          <span class="rate-time">~4 dias</span>
-        </button>
+        <button class="rate-btn again" onclick="rateCard('again')"><span class="re">😖</span><span class="rl">Errei</span><span class="rt">~1 min</span></button>
+        <button class="rate-btn hard" onclick="rateCard('hard')"><span class="re">😓</span><span class="rl">Difícil</span><span class="rt">~10 min</span></button>
+        <button class="rate-btn good" onclick="rateCard('good')"><span class="re">😊</span><span class="rl">Bom</span><span class="rt">~1 dia</span></button>
+        <button class="rate-btn easy" onclick="rateCard('easy')"><span class="re">🤩</span><span class="rl">Fácil</span><span class="rt">~4 dias</span></button>
       </div>
     </div>
   </div>
 
-  <!-- Complete screen -->
   <div class="complete-screen" id="complete-screen">
     <div class="complete-icon">🎉</div>
     <div class="complete-title">Sessão <em>concluída!</em></div>
     <div class="complete-stats">
-      <div class="complete-stat"><div class="val" id="res-correct">0</div><div class="lbl">Acertos</div></div>
-      <div class="complete-stat"><div class="val" id="res-hard">0</div><div class="lbl">Difíceis</div></div>
-      <div class="complete-stat"><div class="val" id="res-again">0</div><div class="lbl">Erros</div></div>
+      <div class="cs"><div class="val" id="res-correct">0</div><div class="lbl">Acertos</div></div>
+      <div class="cs"><div class="val" id="res-hard">0</div><div class="lbl">Difíceis</div></div>
+      <div class="cs"><div class="val" id="res-again">0</div><div class="lbl">Erros</div></div>
     </div>
-    <button class="btn-primary" onclick="showView('dashboard')">Voltar ao início</button>
+    <button class="btn-outline" onclick="showView('dashboard')">Voltar ao início</button>
   </div>
 </div>
 
-<!-- ADD CARD -->
+<!-- ADD -->
 <div class="view" id="view-add">
-  <div class="form-section">
-    <div class="form-title">Nova <em style="font-style:italic; color: var(--accent);">carta</em></div>
-
+  <div class="form-card">
+    <div class="form-title">Nova <em>carta</em></div>
     <div class="form-group">
       <label>Deck</label>
-      <select id="new-deck">
-        <option value="Geral">Geral</option>
-        <option value="Matemática">Matemática</option>
-        <option value="História">História</option>
-        <option value="Idiomas">Idiomas</option>
-        <option value="Ciências">Ciências</option>
-        <option value="Programação">Programação</option>
-      </select>
+      <input type="text" id="new-deck" placeholder="Ex: Matemática, Programação…" list="deck-suggestions" />
+      <datalist id="deck-suggestions"></datalist>
     </div>
-
     <div class="form-group">
       <label>Pergunta (frente)</label>
       <textarea id="new-question" rows="3" placeholder="Ex: Qual é a capital do Japão?"></textarea>
     </div>
-
+    <div class="form-group">
+      <label>Link de imagem — frente (Imgur, opcional)</label>
+      <input type="url" id="new-img-front" placeholder="https://i.imgur.com/xxxxx.jpg" oninput="previewImg('front')" />
+      <div class="img-preview" id="preview-front"><img id="preview-front-img" src="" alt="" /></div>
+    </div>
     <div class="form-group">
       <label>Resposta (verso)</label>
       <textarea id="new-answer" rows="2" placeholder="Ex: Tóquio"></textarea>
     </div>
-
+    <div class="form-group">
+      <label>Link de imagem — verso (Imgur, opcional)</label>
+      <input type="url" id="new-img-back" placeholder="https://i.imgur.com/xxxxx.jpg" oninput="previewImg('back')" />
+      <div class="img-preview" id="preview-back"><img id="preview-back-img" src="" alt="" /></div>
+    </div>
     <div class="form-group">
       <label>Explicação (opcional)</label>
-      <textarea id="new-explanation" rows="2" placeholder="Contexto adicional ou dica de memorização..."></textarea>
+      <textarea id="new-explanation" rows="2" placeholder="Contexto adicional ou dica de memorização…"></textarea>
     </div>
-
-    <button class="btn-primary" onclick="addCard()">Adicionar carta →</button>
+    <button class="btn-submit" id="add-btn" onclick="addCard()">Adicionar carta →</button>
   </div>
 </div>
 
 <!-- MANAGE -->
 <div class="view" id="view-manage">
-  <p class="greeting" style="font-size:1.5rem">Suas <em>cartas</em></p>
-  <p class="subtitle" style="margin-bottom:1.5rem">Total de <span id="total-count">0</span> cartas criadas</p>
-  <div class="cards-list" id="all-cards-list"></div>
+  <div class="manage-header">
+    <div>
+      <p class="greeting" style="font-size:1.5rem">Suas <em>cartas</em></p>
+      <p class="subtitle" style="margin-bottom:0">Total: <span id="total-count">0</span> cartas</p>
+    </div>
+  </div>
+  <div class="cards-list" id="all-cards-list"><div class="loading">Carregando…</div></div>
 </div>
 
-<div class="toast" id="toast">Carta adicionada!</div>
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="zoom" onclick="event.stopPropagation()" />
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-// ===== STATE =====
-let cards = JSON.parse(localStorage.getItem('memocard_cards') || '[]');
+// ── SUPABASE INIT ──
+const { createClient } = supabase;
+const sb = createClient(
+  'https://myoppwndokeovzrenbks.supabase.co',
+  'sb_publishable_QXOZIZ2QEX00W5ofmcmJwg_TsUiKh8A'
+);
 
-// Default cards if empty
-if (cards.length === 0) {
-  cards = [
-    { id: 1, deck: 'Programação', q: 'O que é uma variável?', a: 'Um espaço na memória para armazenar um valor', exp: 'Pode mudar durante a execução do programa.', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-    { id: 2, deck: 'Programação', q: 'O que é recursão?', a: 'Uma função que chama a si mesma', exp: 'Precisa de um caso base para parar.', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-    { id: 3, deck: 'Matemática', q: 'Qual é o valor de π (pi)?', a: '≈ 3,14159265...', exp: 'Razão entre circunferência e diâmetro.', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-    { id: 4, deck: 'Matemática', q: 'Qual é a fórmula da área do círculo?', a: 'A = π × r²', exp: 'r é o raio do círculo.', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-    { id: 5, deck: 'Idiomas', q: '"Ephemeral" significa...?', a: 'Efêmero — que dura pouco tempo', exp: 'Do grego ephemeros (por um dia).', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-    { id: 6, deck: 'História', q: 'Em que ano o Brasil se tornou república?', a: '1889', exp: 'Proclamada em 15 de novembro por Deodoro da Fonseca.', interval: 1, ease: 2.5, due: Date.now(), reviews: 0 },
-  ];
-  saveCards();
-}
+let currentUser = null;
+let allCards = [];
+let studyQueue = [], studyIndex = 0, isFlipped = false;
+let sessionResults = { correct:0, hard:0, again:0 };
 
-// ===== STUDY STATE =====
-let studyQueue = [];
-let studyIndex = 0;
-let studyDeck = '';
-let isFlipped = false;
-let sessionResults = { correct: 0, hard: 0, again: 0 };
+// ── AUTH STATE ──
+sb.auth.onAuthStateChange(async (_event, session) => {
+  if (session?.user) {
+    currentUser = session.user;
+    const name = session.user.user_metadata?.name || session.user.email.split('@')[0];
+    document.getElementById('greet-name').textContent = name;
+    document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+    document.getElementById('topbar').style.display = 'flex';
+    showView('dashboard');
+  } else {
+    currentUser = null;
+    document.getElementById('topbar').style.display = 'none';
+    showView('auth');
+  }
+});
 
-function saveCards() {
-  localStorage.setItem('memocard_cards', JSON.stringify(cards));
-}
-
-// ===== VIEWS =====
+// ── VIEWS ──
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   const idx = ['dashboard','add','manage'].indexOf(name);
   if (idx >= 0) document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'manage') renderManage();
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'manage') loadManage();
+  if (name === 'add') loadDeckSuggestions();
 }
 
-// ===== DASHBOARD =====
-function getDueCards(deckName) {
+// ── AUTH ──
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideAuthError() { document.getElementById('auth-error').style.display = 'none'; }
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showAuthError('Preencha email e senha.'); return; }
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Entrando…';
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) { showAuthError(error.message); btn.disabled = false; btn.textContent = 'Entrar'; }
+}
+
+async function logout() {
+  await sb.auth.signOut();
+}
+
+// ── LOAD DATA ──
+async function loadDashboard() {
+  const { data, error } = await sb.from('flashcards').select('*').eq('user_id', currentUser.id);
+  if (error) { showToast('Erro ao carregar cards'); return; }
+  allCards = data || [];
+
   const now = Date.now();
-  return cards.filter(c => (deckName ? c.deck === deckName : true) && c.due <= now);
+  const due = allCards.filter(c => new Date(c.due_at).getTime() <= now);
+  const learned = allCards.filter(c => c.interval >= 1);
+  const decks = [...new Set(allCards.map(c => c.deck))];
+
+  document.getElementById('stat-total').textContent = allCards.length;
+  document.getElementById('stat-due').textContent = due.length;
+  document.getElementById('stat-learned').textContent = learned.length;
+  document.getElementById('stat-decks').textContent = decks.length;
+
+  renderDecks(decks);
 }
 
-function renderDashboard() {
-  const due = getDueCards();
-  const newCards = cards.filter(c => c.reviews === 0);
-  const learned = cards.filter(c => c.reviews > 0 && c.interval >= 1);
-  
-  document.getElementById('stat-new').textContent = newCards.length;
-  document.getElementById('stat-review').textContent = due.filter(c => c.reviews > 0).length;
-  document.getElementById('stat-learned').textContent = learned.length;
+const DECK_EMOJI = { 'Programação':'💻','Matemática':'📐','História':'📜','Idiomas':'🌍','Ciências':'🔬','Geral':'📚' };
+const DECK_COLOR = { 'Programação':'rgba(96,208,240,.15)','Matemática':'rgba(200,240,96,.15)','História':'rgba(240,184,96,.15)','Idiomas':'rgba(96,240,160,.15)','Ciências':'rgba(240,96,240,.15)','Geral':'rgba(200,200,200,.08)' };
 
-  // Decks
-  const decks = [...new Set(cards.map(c => c.deck))];
-  const deckEmojis = { 'Programação':'💻', 'Matemática':'📐', 'História':'📜', 'Idiomas':'🌍', 'Ciências':'🔬', 'Geral':'📚' };
-  const deckColors = { 'Programação':'rgba(96,208,240,0.15)', 'Matemática':'rgba(200,240,96,0.15)', 'História':'rgba(240,184,96,0.15)', 'Idiomas':'rgba(96,240,160,0.15)', 'Ciências':'rgba(240,96,240,0.15)', 'Geral':'rgba(200,200,200,0.1)' };
-
+function renderDecks(decks) {
   const list = document.getElementById('deck-list');
-
-  if (decks.length === 0) {
+  if (!decks.length) {
     list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhum deck ainda.<br>Adicione sua primeira carta!</p></div>`;
     return;
   }
-
+  const now = Date.now();
   list.innerHTML = decks.map(deck => {
-    const total = cards.filter(c => c.deck === deck).length;
-    const dueD = getDueCards(deck);
-    const newD = cards.filter(c => c.deck === deck && c.reviews === 0);
-    const reviewD = dueD.filter(c => c.reviews > 0);
-    const emoji = deckEmojis[deck] || '📄';
-    const color = deckColors[deck] || 'rgba(200,200,200,0.1)';
+    const dc = allCards.filter(c => c.deck === deck);
+    const dueD = dc.filter(c => new Date(c.due_at).getTime() <= now);
+    const newD = dc.filter(c => c.reviews === 0);
+    const emoji = DECK_EMOJI[deck] || '📄';
+    const color = DECK_COLOR[deck] || 'rgba(200,200,200,.08)';
     return `
       <div class="deck-item" onclick="startStudy('${deck}')">
         <div class="deck-icon" style="background:${color}">${emoji}</div>
         <div class="deck-info">
           <div class="deck-name">${deck}</div>
-          <div class="deck-meta">${total} carta${total !== 1 ? 's' : ''}</div>
+          <div class="deck-meta">${dc.length} carta${dc.length !== 1 ? 's' : ''}</div>
         </div>
         <div class="deck-counts">
           ${newD.length ? `<span class="count-badge badge-new">${newD.length} novo${newD.length>1?'s':''}</span>` : ''}
-          ${reviewD.length ? `<span class="count-badge badge-review">${reviewD.length} revisão</span>` : ''}
+          ${dueD.filter(c=>c.reviews>0).length ? `<span class="count-badge badge-rev">${dueD.filter(c=>c.reviews>0).length} revisão</span>` : ''}
         </div>
-        <button class="study-btn-small" onclick="event.stopPropagation(); startStudy('${deck}')">Estudar</button>
-      </div>
-    `;
+        <button class="study-btn-sm" onclick="event.stopPropagation();startStudy('${deck}')">Estudar</button>
+      </div>`;
   }).join('');
 }
 
-// ===== STUDY =====
+// ── STUDY ──
 function startStudy(deck) {
-  studyDeck = deck;
-  const due = getDueCards(deck);
-  studyQueue = due.length > 0 ? due : cards.filter(c => c.deck === deck);
-  studyQueue = [...studyQueue].sort(() => Math.random() - 0.5);
+  const now = Date.now();
+  let queue = allCards.filter(c => c.deck === deck && new Date(c.due_at).getTime() <= now);
+  if (!queue.length) queue = allCards.filter(c => c.deck === deck);
+  studyQueue = [...queue].sort(() => Math.random() - .5);
   studyIndex = 0;
-  sessionResults = { correct: 0, hard: 0, again: 0 };
-
+  sessionResults = { correct:0, hard:0, again:0 };
   document.getElementById('study-content').style.display = 'block';
   document.getElementById('complete-screen').classList.remove('visible');
-  
   showView('study');
   loadCard();
 }
 
+function imgUrl(url) {
+  if (!url) return '';
+  // convert imgur page links to direct image
+  return url.replace(/https?:\/\/imgur\.com\/([a-zA-Z0-9]+)$/, 'https://i.imgur.com/$1.jpg');
+}
+
 function loadCard() {
-  if (studyIndex >= studyQueue.length) {
-    showComplete();
-    return;
-  }
-
+  if (studyIndex >= studyQueue.length) { showComplete(); return; }
   isFlipped = false;
-  const card = studyQueue[studyIndex];
-  const flashcard = document.getElementById('flashcard');
-  flashcard.classList.remove('flipped');
-
-  document.getElementById('card-deck-tag').textContent = card.deck.toUpperCase();
-  document.getElementById('card-deck-tag-back').textContent = card.deck.toUpperCase();
-  document.getElementById('card-question').textContent = card.q;
-  document.getElementById('card-answer').textContent = card.a;
-  document.getElementById('card-explanation').textContent = card.exp || '';
-
+  const c = studyQueue[studyIndex];
+  document.getElementById('flashcard').classList.remove('flipped');
+  document.getElementById('card-deck-tag').textContent = c.deck.toUpperCase();
+  document.getElementById('card-deck-tag-back').textContent = c.deck.toUpperCase();
+  document.getElementById('card-question').textContent = c.question;
+  document.getElementById('card-answer').textContent = c.answer;
+  document.getElementById('card-explanation').textContent = c.explanation || '';
   document.getElementById('rating-section').classList.remove('visible');
 
-  const progress = Math.round((studyIndex / studyQueue.length) * 100);
-  document.getElementById('progress-fill').style.width = progress + '%';
-  document.getElementById('card-counter').textContent = `${studyIndex + 1} / ${studyQueue.length}`;
+  // Front image
+  const fi = imgUrl(c.img_front || '');
+  const fw = document.getElementById('front-img-wrap');
+  if (fi) { document.getElementById('front-img').src = fi; fw.style.display = 'block'; }
+  else fw.style.display = 'none';
+
+  // Back image
+  const bi = imgUrl(c.img_back || '');
+  const bw = document.getElementById('back-img-wrap');
+  if (bi) { document.getElementById('back-img').src = bi; bw.style.display = 'block'; }
+  else bw.style.display = 'none';
+
+  const pct = Math.round((studyIndex / studyQueue.length) * 100);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('card-counter').textContent = `${studyIndex+1} / ${studyQueue.length}`;
 }
 
 function flipCard() {
   if (isFlipped) return;
   isFlipped = true;
   document.getElementById('flashcard').classList.add('flipped');
-  setTimeout(() => {
-    document.getElementById('rating-section').classList.add('visible');
-  }, 300);
+  setTimeout(() => document.getElementById('rating-section').classList.add('visible'), 300);
 }
 
-function rateCard(rating) {
+async function rateCard(rating) {
   const card = studyQueue[studyIndex];
-  const idx = cards.findIndex(c => c.id === card.id);
-  if (idx === -1) { studyIndex++; loadCard(); return; }
+  let { interval, ease, reviews } = card;
+  ease = ease || 2.5; interval = interval || 1; reviews = reviews || 0;
 
-  // SM-2 simplified
-  let { interval, ease } = cards[idx];
-  cards[idx].reviews = (cards[idx].reviews || 0) + 1;
+  if (rating === 'again') { interval = 1/1440; ease = Math.max(1.3, ease-.2); sessionResults.again++; }
+  else if (rating === 'hard') { interval = Math.max(1, interval*1.2); ease = Math.max(1.3, ease-.15); sessionResults.hard++; }
+  else if (rating === 'good') { interval = Math.max(1, interval*ease); sessionResults.correct++; }
+  else if (rating === 'easy') { interval = Math.max(4, interval*ease*1.3); ease = Math.min(3.0, ease+.15); sessionResults.correct++; }
 
-  if (rating === 'again') {
-    interval = 1/1440; // 1 min in days
-    ease = Math.max(1.3, ease - 0.2);
-    sessionResults.again++;
-  } else if (rating === 'hard') {
-    interval = Math.max(1, interval * 1.2);
-    ease = Math.max(1.3, ease - 0.15);
-    sessionResults.hard++;
-  } else if (rating === 'good') {
-    interval = Math.max(1, interval * ease);
-    sessionResults.correct++;
-  } else if (rating === 'easy') {
-    interval = Math.max(4, interval * ease * 1.3);
-    ease = Math.min(3.0, ease + 0.15);
-    sessionResults.correct++;
-  }
+  const due_at = new Date(Date.now() + interval*86400000).toISOString();
+  await sb.from('flashcards').update({ interval, ease, reviews: reviews+1, due_at }).eq('id', card.id);
 
-  cards[idx].interval = interval;
-  cards[idx].ease = ease;
-  cards[idx].due = Date.now() + interval * 86400000;
-  saveCards();
+  // update local
+  const idx = allCards.findIndex(c => c.id === card.id);
+  if (idx >= 0) Object.assign(allCards[idx], { interval, ease, reviews: reviews+1, due_at });
 
   studyIndex++;
-  setTimeout(loadCard, 100);
+  setTimeout(loadCard, 80);
 }
 
 function showComplete() {
@@ -945,79 +671,100 @@ function showComplete() {
   document.getElementById('progress-fill').style.width = '100%';
 }
 
-// ===== ADD CARD =====
-function addCard() {
-  const q = document.getElementById('new-question').value.trim();
-  const a = document.getElementById('new-answer').value.trim();
-  const deck = document.getElementById('new-deck').value;
-  const exp = document.getElementById('new-explanation').value.trim();
-
-  if (!q || !a) { showToast('Preencha a pergunta e a resposta!'); return; }
-
-  const card = {
-    id: Date.now(),
-    deck, q, a, exp,
-    interval: 1,
-    ease: 2.5,
-    due: Date.now(),
-    reviews: 0
-  };
-
-  cards.push(card);
-  saveCards();
-
-  document.getElementById('new-question').value = '';
-  document.getElementById('new-answer').value = '';
-  document.getElementById('new-explanation').value = '';
-  showToast('✓ Carta adicionada ao deck ' + deck + '!');
+// ── ADD CARD ──
+async function loadDeckSuggestions() {
+  const decks = [...new Set(allCards.map(c => c.deck))];
+  document.getElementById('deck-suggestions').innerHTML = decks.map(d => `<option value="${d}">`).join('');
 }
 
-// ===== MANAGE =====
-function renderManage() {
-  document.getElementById('total-count').textContent = cards.length;
+function previewImg(side) {
+  const url = document.getElementById(`new-img-${side}`).value.trim();
+  const wrap = document.getElementById(`preview-${side}`);
+  const img = document.getElementById(`preview-${side}-img`);
+  if (url) { img.src = imgUrl(url); wrap.style.display = 'block'; }
+  else wrap.style.display = 'none';
+}
+
+async function addCard() {
+  const deck = document.getElementById('new-deck').value.trim();
+  const question = document.getElementById('new-question').value.trim();
+  const answer = document.getElementById('new-answer').value.trim();
+  const explanation = document.getElementById('new-explanation').value.trim();
+  const img_front = document.getElementById('new-img-front').value.trim();
+  const img_back = document.getElementById('new-img-back').value.trim();
+  if (!deck || !question || !answer) { showToast('Preencha deck, pergunta e resposta!'); return; }
+  const btn = document.getElementById('add-btn');
+  btn.disabled = true; btn.textContent = 'Salvando…';
+  const { error } = await sb.from('flashcards').insert({
+    user_id: currentUser.id, deck, question, answer, explanation,
+    img_front: img_front || null, img_back: img_back || null,
+    interval: 1, ease: 2.5, reviews: 0,
+    due_at: new Date().toISOString()
+  });
+  btn.disabled = false; btn.textContent = 'Adicionar carta →';
+  if (error) { showToast('Erro: ' + error.message); return; }
+  ['new-deck','new-question','new-answer','new-explanation','new-img-front','new-img-back'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('preview-front').style.display = 'none';
+  document.getElementById('preview-back').style.display = 'none';
+  showToast('✓ Carta adicionada!');
+  await loadDashboard();
+}
+
+// ── MANAGE ──
+async function loadManage() {
+  const { data } = await sb.from('flashcards').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+  allCards = data || [];
+  document.getElementById('total-count').textContent = allCards.length;
   const list = document.getElementById('all-cards-list');
-  if (cards.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhuma carta ainda. Adicione a primeira!</p></div>`;
+  if (!allCards.length) {
+    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhuma carta ainda.</p></div>`;
     return;
   }
-  list.innerHTML = cards.map(c => `
-    <div class="card-list-item">
-      <div style="font-size:0.7rem; color:var(--muted); padding:0.2rem 0.5rem; border:1px solid var(--border); border-radius:5px; white-space:nowrap">${c.deck}</div>
-      <div class="card-list-q">${c.q}</div>
-      <div class="card-list-a">${c.a}</div>
-      <button class="delete-btn" onclick="deleteCard(${c.id})" title="Excluir">✕</button>
-    </div>
-  `).join('');
+  list.innerHTML = allCards.map(c => `
+    <div class="card-li">
+      <span class="card-li-deck">${c.deck}</span>
+      <span class="card-li-q">${c.question}</span>
+      <span class="card-li-a">${c.answer}</span>
+      <button class="del-btn" onclick="deleteCard('${c.id}')">✕</button>
+    </div>`).join('');
 }
 
-function deleteCard(id) {
-  cards = cards.filter(c => c.id !== id);
-  saveCards();
-  renderManage();
-  renderDashboard();
+async function deleteCard(id) {
+  await sb.from('flashcards').delete().eq('id', id);
+  showToast('Carta removida.');
+  loadManage();
 }
 
-// ===== TOAST =====
+// ── LIGHTBOX ──
+function openLightbox(e, src) {
+  e.stopPropagation();
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+// ── TOAST ──
 function showToast(msg) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
+  t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
-// ===== KEYBOARD =====
+// ── KEYBOARD ──
 document.addEventListener('keydown', e => {
-  const studyActive = document.getElementById('view-study').classList.contains('active');
-  if (!studyActive) return;
+  if (document.getElementById('lightbox').classList.contains('open')) {
+    if (e.key === 'Escape') closeLightbox(); return;
+  }
+  if (!document.getElementById('view-study').classList.contains('active')) return;
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
   if (e.code === 'Space') { e.preventDefault(); flipCard(); }
   if (e.code === 'Digit1') rateCard('again');
   if (e.code === 'Digit2') rateCard('hard');
   if (e.code === 'Digit3') rateCard('good');
   if (e.code === 'Digit4') rateCard('easy');
 });
-
-// ===== INIT =====
-renderDashboard();
 </script>
 </body>
 </html>
