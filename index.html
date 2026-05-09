@@ -40,16 +40,16 @@ body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text);
   font-family:'Outfit',sans-serif; font-size:.88rem; transition:all .2s;
 }
 .nav-btn:hover,.nav-btn.active { background:var(--surface2); color:var(--text); border-color:var(--border); }
-.user-chip {
-  display:flex; align-items:center; gap:.5rem;
-  font-size:.82rem; color:var(--muted);
-}
-.avatar {
-  width:30px; height:30px; border-radius:50%;
+.user-chip { display:flex; align-items:center; gap:.5rem; font-size:.82rem; color:var(--muted); }
+.avatar-btn {
+  width:32px; height:32px; border-radius:50%;
   background:rgba(200,240,96,.2); color:var(--accent);
   display:flex; align-items:center; justify-content:center;
-  font-size:.75rem; font-weight:600;
+  font-size:.75rem; font-weight:600; cursor:pointer;
+  border:2px solid transparent; transition:border-color .2s; overflow:hidden;
 }
+.avatar-btn:hover { border-color:var(--accent); }
+.avatar-btn img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .logout-btn {
   background:none; border:1px solid var(--border); color:var(--muted);
   padding:.25rem .7rem; border-radius:7px; cursor:pointer;
@@ -62,14 +62,9 @@ body { font-family:'Outfit',sans-serif; background:var(--bg); color:var(--text);
 .view.active { display:block; }
 
 /* ── AUTH ── */
-#view-auth {
-  display:none; max-width:420px; margin:4rem auto; padding:2rem;
-}
+#view-auth { display:none; max-width:420px; margin:4rem auto; padding:2rem; }
 #view-auth.active { display:block; }
-.auth-card {
-  background:var(--surface); border:1px solid var(--border);
-  border-radius:var(--radius); padding:2.5rem;
-}
+.auth-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:2.5rem; }
 .auth-title { font-family:'Fraunces',serif; font-size:1.8rem; font-weight:300; margin-bottom:.3rem; }
 .auth-title em { font-style:italic; color:var(--accent); }
 .auth-sub { font-size:.85rem; color:var(--muted); margin-bottom:2rem; }
@@ -90,8 +85,6 @@ select option { background:var(--surface2); }
 }
 .btn-primary:hover { background:#d8f870; }
 .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
-.auth-toggle { text-align:center; margin-top:1.2rem; font-size:.85rem; color:var(--muted); }
-.auth-toggle a { color:var(--accent); cursor:pointer; text-decoration:none; }
 .auth-error {
   background:rgba(240,96,96,.1); border:1px solid rgba(240,96,96,.3);
   color:var(--danger); border-radius:8px; padding:.6rem .9rem;
@@ -181,42 +174,19 @@ select option { background:var(--surface2); }
 .card-explanation { font-size:.88rem; color:var(--muted); line-height:1.6; margin-top:.9rem; max-width:500px; }
 
 /* CARD IMAGE */
-.card-img-wrap {
-  margin:.9rem 0; cursor:zoom-in;
-  border-radius:10px; overflow:hidden;
-  border:1px solid var(--border);
-  max-width:320px; width:100%;
-}
-.card-img-wrap img {
-  width:100%; height:180px; object-fit:cover; display:block;
-  transition:opacity .2s;
-}
+.card-img-wrap { margin:.9rem 0; cursor:zoom-in; border-radius:10px; overflow:hidden; border:1px solid var(--border); max-width:320px; width:100%; }
+.card-img-wrap img { width:100%; height:180px; object-fit:cover; display:block; transition:opacity .2s; }
 .card-img-wrap:hover img { opacity:.85; }
 
 /* LIGHTBOX */
-.lightbox {
-  display:none; position:fixed; inset:0; z-index:999;
-  background:rgba(0,0,0,.85); align-items:center; justify-content:center;
-}
+.lightbox { display:none; position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.85); align-items:center; justify-content:center; }
 .lightbox.open { display:flex; }
-.lightbox img {
-  max-width:90vw; max-height:90vh; object-fit:contain;
-  border-radius:10px; border:1px solid var(--border);
-  cursor:zoom-out;
-}
-.lightbox-close {
-  position:absolute; top:1.5rem; right:1.5rem;
-  background:var(--surface2); border:1px solid var(--border); color:var(--text);
-  width:36px; height:36px; border-radius:50%; font-size:1.1rem;
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-}
+.lightbox img { max-width:90vw; max-height:90vh; object-fit:contain; border-radius:10px; border:1px solid var(--border); cursor:zoom-out; }
+.lightbox-close { position:absolute; top:1.5rem; right:1.5rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); width:36px; height:36px; border-radius:50%; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; }
 
 /* FLIP HINT */
 .flip-hint { position:absolute; bottom:1.1rem; font-size:.72rem; color:var(--muted); display:flex; align-items:center; gap:.35rem; }
-.flip-hint kbd {
-  background:var(--surface3); border:1px solid var(--border); border-radius:4px;
-  padding:.08rem .38rem; font-family:'DM Mono',monospace; font-size:.68rem; color:var(--text);
-}
+.flip-hint kbd { background:var(--surface3); border:1px solid var(--border); border-radius:4px; padding:.08rem .38rem; font-family:'DM Mono',monospace; font-size:.68rem; color:var(--text); }
 
 /* RATING */
 .rating-section { display:none; flex-direction:column; align-items:center; gap:.9rem; }
@@ -257,7 +227,7 @@ select option { background:var(--surface2); }
 }
 .btn-outline:hover { border-color:var(--accent); color:var(--accent); }
 
-/* ── ADD VIEW ── */
+/* ── FORM CARDS ── */
 .form-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; margin-bottom:1.5rem; }
 .form-title { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:300; margin-bottom:1.5rem; }
 .form-title em { font-style:italic; color:var(--accent); }
@@ -305,12 +275,145 @@ select option { background:var(--surface2); }
 /* LOADING */
 .loading { text-align:center; padding:3rem; color:var(--muted); font-size:.9rem; }
 
+/* ── DECK MANAGER ── */
+.deck-manager-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.deck-manage-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:.9rem 1.1rem;
+  display:flex; align-items:center; gap:.8rem;
+}
+.deck-manage-item .deck-icon-sm { font-size:1.3rem; }
+.deck-manage-item .dname { flex:1; font-weight:500; font-size:.9rem; }
+.deck-manage-item .dcount { font-size:.75rem; color:var(--muted); font-family:'DM Mono',monospace; }
+.deck-del-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.9rem; padding:.2rem .4rem; border-radius:6px; transition:all .2s; }
+.deck-del-btn:hover { color:var(--danger); background:rgba(240,96,96,.1); }
+
+/* ── PROFILE VIEW ── */
+.profile-grid { display:grid; grid-template-columns:300px 1fr; gap:1.5rem; }
+.profile-sidebar { display:flex; flex-direction:column; gap:1rem; }
+.profile-avatar-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.8rem; text-align:center;
+}
+.profile-avatar-wrap {
+  width:90px; height:90px; border-radius:50%; margin:0 auto 1rem;
+  background:rgba(200,240,96,.15); border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:2.5rem; cursor:pointer; overflow:hidden; position:relative;
+  transition:border-color .2s;
+}
+.profile-avatar-wrap:hover { border-color:var(--accent); }
+.profile-avatar-wrap img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.profile-avatar-overlay {
+  position:absolute; inset:0; background:rgba(0,0,0,.5);
+  display:flex; align-items:center; justify-content:center;
+  border-radius:50%; opacity:0; transition:opacity .2s; font-size:.7rem; color:#fff;
+}
+.profile-avatar-wrap:hover .profile-avatar-overlay { opacity:1; }
+.profile-name { font-family:'Fraunces',serif; font-size:1.2rem; font-weight:500; }
+.profile-email { font-size:.78rem; color:var(--muted); margin-top:.2rem; }
+.profile-url-input { margin-top:1rem; }
+.profile-url-input input { font-size:.8rem; }
+.profile-url-input button {
+  margin-top:.5rem; width:100%;
+  background:var(--surface2); border:1px solid var(--border); color:var(--text);
+  padding:.45rem; border-radius:8px; font-family:'Outfit',sans-serif;
+  font-size:.82rem; cursor:pointer; transition:all .2s;
+}
+.profile-url-input button:hover { border-color:var(--accent); color:var(--accent); }
+
+/* REMINDERS */
+.reminders-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.2rem;
+}
+.reminders-card h3 { font-size:.8rem; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-bottom:.9rem; }
+.reminder-input-row { display:flex; gap:.5rem; margin-bottom:.8rem; }
+.reminder-input-row input { flex:1; font-size:.85rem; padding:.5rem .8rem; }
+.reminder-input-row button {
+  background:var(--accent); color:#0d0d0f; border:none;
+  padding:.5rem .9rem; border-radius:8px; font-size:.85rem; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:all .2s;
+}
+.reminder-input-row button:hover { background:#d8f870; }
+.reminder-list { display:flex; flex-direction:column; gap:.4rem; max-height:200px; overflow-y:auto; }
+.reminder-item {
+  background:var(--surface2); border-radius:8px; padding:.5rem .8rem;
+  display:flex; align-items:center; gap:.6rem; font-size:.83rem;
+}
+.reminder-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; }
+.reminder-text { flex:1; }
+.reminder-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.85rem; transition:color .2s; }
+.reminder-del:hover { color:var(--danger); }
+
+/* CALENDAR */
+.calendar-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.4rem;
+}
+.cal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:1.2rem;
+}
+.cal-title { font-family:'Fraunces',serif; font-size:1.1rem; font-weight:500; }
+.cal-nav { background:var(--surface2); border:1px solid var(--border); color:var(--text); width:30px; height:30px; border-radius:7px; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+.cal-nav:hover { border-color:var(--accent); color:var(--accent); }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.cal-day-name { text-align:center; font-size:.65rem; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); padding:.4rem 0; }
+.cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:.78rem; border-radius:7px; cursor:pointer;
+  transition:all .15s; position:relative; font-family:'DM Mono',monospace;
+}
+.cal-day:hover { background:var(--surface2); }
+.cal-day.other-month { color:var(--border); cursor:default; }
+.cal-day.other-month:hover { background:none; }
+.cal-day.today { background:rgba(200,240,96,.15); color:var(--accent); font-weight:600; }
+.cal-day.holiday { color:var(--danger) !important; }
+.cal-day.event { background:rgba(96,208,240,.12); color:var(--accent2); }
+.cal-day.event.holiday { background:rgba(240,96,96,.12); color:var(--danger); }
+.cal-day.selected { background:var(--accent) !important; color:#0d0d0f !important; font-weight:700; }
+.cal-dot { position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:var(--accent2); }
+.cal-holiday-dot { background:var(--danger); }
+
+/* EVENT PANEL */
+.event-panel {
+  margin-top:1rem; border-top:1px solid var(--border); padding-top:1rem;
+  display:none;
+}
+.event-panel.open { display:block; }
+.event-panel-title { font-size:.78rem; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); margin-bottom:.7rem; }
+.event-input-row { display:flex; gap:.5rem; margin-bottom:.6rem; }
+.event-input-row input { flex:1; font-size:.83rem; padding:.45rem .8rem; }
+.event-input-row button {
+  background:var(--accent2); color:#0d0d0f; border:none;
+  padding:.45rem .8rem; border-radius:8px; font-size:.82rem; font-weight:600;
+  cursor:pointer; white-space:nowrap; transition:all .2s;
+}
+.event-input-row button:hover { background:#80dcf8; }
+.event-list { display:flex; flex-direction:column; gap:.35rem; }
+.event-item {
+  background:var(--surface2); border-radius:7px; padding:.45rem .7rem;
+  display:flex; align-items:center; gap:.5rem; font-size:.82rem;
+}
+.event-item .ev-type { font-size:.65rem; border-radius:4px; padding:.1rem .4rem; font-weight:600; }
+.ev-type.holiday { background:rgba(240,96,96,.2); color:var(--danger); }
+.ev-type.event { background:rgba(96,208,240,.2); color:var(--accent2); }
+.event-item .ev-name { flex:1; }
+.event-del { background:none; border:none; color:var(--muted); cursor:pointer; font-size:.82rem; transition:color .2s; }
+.event-del:hover { color:var(--danger); }
+
+@media(max-width:760px) {
+  .profile-grid { grid-template-columns:1fr; }
+  .deck-manager-grid { grid-template-columns:1fr; }
+}
 @media(max-width:600px) {
   .stats-grid { grid-template-columns:repeat(2,1fr); }
   .rating-buttons { grid-template-columns:repeat(2,1fr); }
   .view { padding:1rem; }
   .card-question { font-size:1.3rem; }
   .topbar { padding:.8rem 1rem; }
+  .nav-btn { padding:.3rem .6rem; font-size:.8rem; }
 }
 </style>
 </head>
@@ -321,11 +424,13 @@ select option { background:var(--surface2); }
   <div class="logo">Gust<span>anki</span></div>
   <nav class="nav-links">
     <button class="nav-btn active" onclick="showView('dashboard')">Início</button>
-    <button class="nav-btn" onclick="showView('add')">Adicionar</button>
+    <button class="nav-btn" onclick="showView('add-deck')">Decks</button>
+    <button class="nav-btn" onclick="showView('add-card')">Cards</button>
     <button class="nav-btn" onclick="showView('manage')">Gerenciar</button>
+    <button class="nav-btn" onclick="showView('profile')">Perfil</button>
   </nav>
   <div class="user-chip">
-    <div class="avatar" id="user-avatar">?</div>
+    <div class="avatar-btn" id="user-avatar" onclick="showView('profile')">?</div>
     <button class="logout-btn" onclick="logout()">Sair</button>
   </div>
 </div>
@@ -336,7 +441,6 @@ select option { background:var(--surface2); }
     <div class="auth-title">Gust<em>anki</em></div>
     <div class="auth-sub">Entre com suas credenciais para continuar.</div>
     <div class="auth-error" id="auth-error"></div>
-
     <div id="auth-login-form">
       <div class="form-group">
         <label>Email</label>
@@ -372,7 +476,6 @@ select option { background:var(--surface2); }
     <div class="progress-wrap"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
     <div class="card-counter" id="card-counter">0 / 0</div>
   </div>
-
   <div id="study-content">
     <div class="flashcard-wrap">
       <div class="flashcard" id="flashcard" onclick="flipCard()">
@@ -394,7 +497,6 @@ select option { background:var(--surface2); }
         </div>
       </div>
     </div>
-
     <div class="rating-section" id="rating-section">
       <div class="rating-label">Como foi desta vez?</div>
       <div class="rating-buttons">
@@ -405,7 +507,6 @@ select option { background:var(--surface2); }
       </div>
     </div>
   </div>
-
   <div class="complete-screen" id="complete-screen">
     <div class="complete-icon">🎉</div>
     <div class="complete-title">Sessão <em>concluída!</em></div>
@@ -418,14 +519,38 @@ select option { background:var(--surface2); }
   </div>
 </div>
 
-<!-- ADD -->
-<div class="view" id="view-add">
+<!-- ADD DECK -->
+<div class="view" id="view-add-deck">
+  <div class="form-card">
+    <div class="form-title">Novo <em>deck</em></div>
+    <div class="form-group">
+      <label>Nome do Deck</label>
+      <input type="text" id="new-deck-name" placeholder="Ex: Matemática, Programação, Idiomas…" />
+    </div>
+    <div class="form-group">
+      <label>Emoji (opcional)</label>
+      <input type="text" id="new-deck-emoji" placeholder="📚" maxlength="2" style="max-width:80px" />
+    </div>
+    <button class="btn-submit" id="add-deck-btn" onclick="addDeck()">Criar deck →</button>
+  </div>
+
+  <div class="form-card">
+    <div class="form-title">Seus <em>decks</em></div>
+    <div class="deck-manager-grid" id="deck-manager-list">
+      <div class="loading">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD CARD -->
+<div class="view" id="view-add-card">
   <div class="form-card">
     <div class="form-title">Nova <em>carta</em></div>
     <div class="form-group">
-      <label>Deck</label>
-      <input type="text" id="new-deck" placeholder="Ex: Matemática, Programação…" list="deck-suggestions" />
-      <datalist id="deck-suggestions"></datalist>
+      <label>Deck de destino</label>
+      <select id="new-card-deck">
+        <option value="">— Selecione um deck —</option>
+      </select>
     </div>
     <div class="form-group">
       <label>Pergunta (frente)</label>
@@ -464,6 +589,56 @@ select option { background:var(--surface2); }
   <div class="cards-list" id="all-cards-list"><div class="loading">Carregando…</div></div>
 </div>
 
+<!-- PROFILE -->
+<div class="view" id="view-profile">
+  <p class="greeting" style="margin-bottom:1.5rem">Meu <em>perfil</em></p>
+  <div class="profile-grid">
+    <!-- Sidebar -->
+    <div class="profile-sidebar">
+      <div class="profile-avatar-card">
+        <div class="profile-avatar-wrap" id="profile-avatar-wrap" onclick="document.getElementById('avatar-url-input').focus()">
+          <div id="profile-avatar-display" style="font-size:2.5rem">?</div>
+          <div class="profile-avatar-overlay">✏️ Editar</div>
+        </div>
+        <div class="profile-name" id="profile-name-display">—</div>
+        <div class="profile-email" id="profile-email-display">—</div>
+        <div class="profile-url-input">
+          <label>URL do avatar (Imgur)</label>
+          <input type="url" id="avatar-url-input" placeholder="https://i.imgur.com/xxxxx.jpg" />
+          <button onclick="saveAvatar()">Salvar foto</button>
+        </div>
+      </div>
+
+      <div class="reminders-card">
+        <h3>Lembretes</h3>
+        <div class="reminder-input-row">
+          <input type="text" id="new-reminder" placeholder="Adicionar lembrete…" onkeydown="if(event.key==='Enter')addReminder()" />
+          <button onclick="addReminder()">+</button>
+        </div>
+        <div class="reminder-list" id="reminder-list"></div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="calendar-card">
+      <div class="cal-header">
+        <button class="cal-nav" onclick="calPrev()">‹</button>
+        <div class="cal-title" id="cal-title">—</div>
+        <button class="cal-nav" onclick="calNext()">›</button>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+      <div class="event-panel" id="event-panel">
+        <div class="event-panel-title">Eventos em <span id="event-panel-date">—</span></div>
+        <div class="event-list" id="event-list"></div>
+        <div class="event-input-row" style="margin-top:.6rem">
+          <input type="text" id="new-event-input" placeholder="Novo evento…" onkeydown="if(event.key==='Enter')addEvent()" />
+          <button onclick="addEvent()">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" onclick="closeLightbox()">
   <button class="lightbox-close" onclick="closeLightbox()">✕</button>
@@ -482,8 +657,74 @@ const sb = createClient(
 
 let currentUser = null;
 let allCards = [];
+let allDecks = []; // stored deck list
 let studyQueue = [], studyIndex = 0, isFlipped = false;
 let sessionResults = { correct:0, hard:0, again:0 };
+
+// Profile state (localStorage for persistence)
+let profileAvatar = '';
+let reminders = [];
+let userEvents = {}; // key: YYYY-MM-DD, value: [{name}]
+
+// Calendar state
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let selectedCalDate = null;
+
+// ── BRAZILIAN HOLIDAYS ──
+function getBrazilHolidays(year) {
+  // Fixed holidays
+  const fixed = [
+    { date: `${year}-01-01`, name: 'Confraternização Universal' },
+    { date: `${year}-04-21`, name: 'Tiradentes' },
+    { date: `${year}-05-01`, name: 'Dia do Trabalho' },
+    { date: `${year}-09-07`, name: 'Independência do Brasil' },
+    { date: `${year}-10-12`, name: 'Nossa Sra. Aparecida' },
+    { date: `${year}-11-02`, name: 'Finados' },
+    { date: `${year}-11-15`, name: 'Proclamação da República' },
+    { date: `${year}-11-20`, name: 'Consciência Negra' },
+    { date: `${year}-12-25`, name: 'Natal' },
+  ];
+  // Easter-based (Computus)
+  const easter = getEaster(year);
+  const carnaval1 = addDays(easter, -48);
+  const carnaval2 = addDays(easter, -47);
+  const sextaSanta = addDays(easter, -2);
+  const corpusChristi = addDays(easter, 60);
+  fixed.push(
+    { date: fmtDate(carnaval1), name: 'Carnaval' },
+    { date: fmtDate(carnaval2), name: 'Carnaval' },
+    { date: fmtDate(sextaSanta), name: 'Sexta-feira Santa' },
+    { date: fmtDate(easter), name: 'Páscoa' },
+    { date: fmtDate(corpusChristi), name: 'Corpus Christi' },
+  );
+  const map = {};
+  fixed.forEach(h => { map[h.date] = h.name; });
+  return map;
+}
+
+function getEaster(year) {
+  // Anonymous Gregorian algorithm
+  const a = year % 19, b = Math.floor(year/100), c = year % 100;
+  const d = Math.floor(b/4), e = b % 4, f = Math.floor((b+8)/25);
+  const g = Math.floor((b-f+1)/3), h = (19*a+b-d-g+15) % 30;
+  const i = Math.floor(c/4), k = c % 4;
+  const l = (32+2*e+2*i-h-k) % 7;
+  const m = Math.floor((a+11*h+22*l)/451);
+  const month = Math.floor((h+l-7*m+114)/31);
+  const day = ((h+l-7*m+114) % 31) + 1;
+  return new Date(year, month-1, day);
+}
+
+function addDays(date, n) {
+  const d = new Date(date); d.setDate(d.getDate()+n); return d;
+}
+
+function fmtDate(d) {
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
 
 // ── AUTH STATE ──
 sb.auth.onAuthStateChange(async (_event, session) => {
@@ -491,8 +732,8 @@ sb.auth.onAuthStateChange(async (_event, session) => {
     currentUser = session.user;
     const name = session.user.user_metadata?.name || session.user.email.split('@')[0];
     document.getElementById('greet-name').textContent = name;
-    document.getElementById('user-avatar').textContent = name[0].toUpperCase();
     document.getElementById('topbar').style.display = 'flex';
+    loadProfileFromStorage();
     showView('dashboard');
   } else {
     currentUser = null;
@@ -502,15 +743,19 @@ sb.auth.onAuthStateChange(async (_event, session) => {
 });
 
 // ── VIEWS ──
+const NAV_VIEWS = ['dashboard','add-deck','add-card','manage','profile'];
+
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
-  const idx = ['dashboard','add','manage'].indexOf(name);
+  const idx = NAV_VIEWS.indexOf(name);
   if (idx >= 0) document.querySelectorAll('.nav-btn')[idx]?.classList.add('active');
   if (name === 'dashboard') loadDashboard();
   if (name === 'manage') loadManage();
-  if (name === 'add') loadDeckSuggestions();
+  if (name === 'add-deck') loadDeckManager();
+  if (name === 'add-card') loadCardDeckSelect();
+  if (name === 'profile') initProfile();
 }
 
 // ── AUTH ──
@@ -530,9 +775,7 @@ async function login() {
   if (error) { showAuthError(error.message); btn.disabled = false; btn.textContent = 'Entrar'; }
 }
 
-async function logout() {
-  await sb.auth.signOut();
-}
+async function logout() { await sb.auth.signOut(); }
 
 // ── LOAD DATA ──
 async function loadDashboard() {
@@ -556,10 +799,17 @@ async function loadDashboard() {
 const DECK_EMOJI = { 'Programação':'💻','Matemática':'📐','História':'📜','Idiomas':'🌍','Ciências':'🔬','Geral':'📚' };
 const DECK_COLOR = { 'Programação':'rgba(96,208,240,.15)','Matemática':'rgba(200,240,96,.15)','História':'rgba(240,184,96,.15)','Idiomas':'rgba(96,240,160,.15)','Ciências':'rgba(240,96,240,.15)','Geral':'rgba(200,200,200,.08)' };
 
+function deckEmoji(name) {
+  // Check custom decks stored
+  const custom = allDecks.find(d => d.name === name);
+  if (custom && custom.emoji) return custom.emoji;
+  return DECK_EMOJI[name] || '📄';
+}
+
 function renderDecks(decks) {
   const list = document.getElementById('deck-list');
   if (!decks.length) {
-    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhum deck ainda.<br>Adicione sua primeira carta!</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhum deck ainda.<br>Crie seu primeiro deck na aba <strong>Decks</strong>!</p></div>`;
     return;
   }
   const now = Date.now();
@@ -567,7 +817,7 @@ function renderDecks(decks) {
     const dc = allCards.filter(c => c.deck === deck);
     const dueD = dc.filter(c => new Date(c.due_at).getTime() <= now);
     const newD = dc.filter(c => c.reviews === 0);
-    const emoji = DECK_EMOJI[deck] || '📄';
+    const emoji = deckEmoji(deck);
     const color = DECK_COLOR[deck] || 'rgba(200,200,200,.08)';
     return `
       <div class="deck-item" onclick="startStudy('${deck}')">
@@ -599,10 +849,20 @@ function startStudy(deck) {
   loadCard();
 }
 
+// ── IMG URL FIX ──
 function imgUrl(url) {
   if (!url) return '';
-  // convert imgur page links to direct image
-  return url.replace(/https?:\/\/imgur\.com\/([a-zA-Z0-9]+)$/, 'https://i.imgur.com/$1.jpg');
+  // Convert imgur page links → direct image
+  // Also handle album/gallery links
+  let u = url.trim();
+  u = u.replace(/https?:\/\/imgur\.com\/([a-zA-Z0-9]+)$/, 'https://i.imgur.com/$1.jpg');
+  u = u.replace(/https?:\/\/imgur\.com\/a\/([a-zA-Z0-9]+).*/, ''); // albums unsupported
+  // Add referrer-friendly proxy if not already direct
+  if (u.includes('i.imgur.com')) {
+    // Use a CORS-friendly approach: proxy through allorigins
+    return `https://wsrv.nl/?url=${encodeURIComponent(u)}&n=-1`;
+  }
+  return u;
 }
 
 function loadCard() {
@@ -617,13 +877,11 @@ function loadCard() {
   document.getElementById('card-explanation').textContent = c.explanation || '';
   document.getElementById('rating-section').classList.remove('visible');
 
-  // Front image
   const fi = imgUrl(c.img_front || '');
   const fw = document.getElementById('front-img-wrap');
   if (fi) { document.getElementById('front-img').src = fi; fw.style.display = 'block'; }
   else fw.style.display = 'none';
 
-  // Back image
   const bi = imgUrl(c.img_back || '');
   const bw = document.getElementById('back-img-wrap');
   if (bi) { document.getElementById('back-img').src = bi; bw.style.display = 'block'; }
@@ -654,7 +912,6 @@ async function rateCard(rating) {
   const due_at = new Date(Date.now() + interval*86400000).toISOString();
   await sb.from('flashcards').update({ interval, ease, reviews: reviews+1, due_at }).eq('id', card.id);
 
-  // update local
   const idx = allCards.findIndex(c => c.id === card.id);
   if (idx >= 0) Object.assign(allCards[idx], { interval, ease, reviews: reviews+1, due_at });
 
@@ -671,10 +928,80 @@ function showComplete() {
   document.getElementById('progress-fill').style.width = '100%';
 }
 
+// ── DECKS ──
+function loadDecksFromStorage() {
+  const key = `gustanki_decks_${currentUser?.id}`;
+  try { allDecks = JSON.parse(localStorage.getItem(key)) || []; }
+  catch { allDecks = []; }
+}
+
+function saveDecksToStorage() {
+  const key = `gustanki_decks_${currentUser?.id}`;
+  localStorage.setItem(key, JSON.stringify(allDecks));
+}
+
+function addDeck() {
+  const name = document.getElementById('new-deck-name').value.trim();
+  const emoji = document.getElementById('new-deck-emoji').value.trim() || '📄';
+  if (!name) { showToast('Digite um nome para o deck!'); return; }
+  if (allDecks.find(d => d.name === name)) { showToast('Já existe um deck com esse nome.'); return; }
+  allDecks.push({ name, emoji });
+  saveDecksToStorage();
+  document.getElementById('new-deck-name').value = '';
+  document.getElementById('new-deck-emoji').value = '';
+  showToast('✓ Deck criado!');
+  loadDeckManager();
+}
+
+function deleteDeck(name) {
+  const cardCount = allCards.filter(c => c.deck === name).length;
+  if (cardCount > 0 && !confirm(`Este deck tem ${cardCount} carta(s). Remover mesmo assim?`)) return;
+  allDecks = allDecks.filter(d => d.name !== name);
+  saveDecksToStorage();
+  showToast('Deck removido.');
+  loadDeckManager();
+}
+
+async function loadDeckManager() {
+  loadDecksFromStorage();
+  // Also add any decks inferred from existing cards
+  const { data } = await sb.from('flashcards').select('deck').eq('user_id', currentUser.id);
+  const cardDecks = [...new Set((data||[]).map(c => c.deck))];
+  cardDecks.forEach(name => {
+    if (!allDecks.find(d => d.name === name)) allDecks.push({ name, emoji: DECK_EMOJI[name] || '📄' });
+  });
+  saveDecksToStorage();
+
+  const grid = document.getElementById('deck-manager-list');
+  if (!allDecks.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="big">📭</div><p>Nenhum deck ainda.</p></div>`;
+    return;
+  }
+  const cardCounts = {};
+  (data||[]).forEach(c => { cardCounts[c.deck] = (cardCounts[c.deck]||0)+1; });
+  grid.innerHTML = allDecks.map(d => `
+    <div class="deck-manage-item">
+      <span class="deck-icon-sm">${d.emoji}</span>
+      <span class="dname">${d.name}</span>
+      <span class="dcount">${cardCounts[d.name]||0} carta${(cardCounts[d.name]||0)!==1?'s':''}</span>
+      <button class="deck-del-btn" onclick="deleteDeck('${d.name}')">✕</button>
+    </div>`).join('');
+}
+
 // ── ADD CARD ──
-async function loadDeckSuggestions() {
-  const decks = [...new Set(allCards.map(c => c.deck))];
-  document.getElementById('deck-suggestions').innerHTML = decks.map(d => `<option value="${d}">`).join('');
+async function loadCardDeckSelect() {
+  loadDecksFromStorage();
+  // merge with existing card decks
+  const { data } = await sb.from('flashcards').select('deck').eq('user_id', currentUser.id);
+  const cardDecks = [...new Set((data||[]).map(c => c.deck))];
+  cardDecks.forEach(name => {
+    if (!allDecks.find(d => d.name === name)) allDecks.push({ name, emoji: DECK_EMOJI[name] || '📄' });
+  });
+  saveDecksToStorage();
+
+  const sel = document.getElementById('new-card-deck');
+  sel.innerHTML = '<option value="">— Selecione um deck —</option>' +
+    allDecks.map(d => `<option value="${d.name}">${d.emoji} ${d.name}</option>`).join('');
 }
 
 function previewImg(side) {
@@ -686,13 +1013,14 @@ function previewImg(side) {
 }
 
 async function addCard() {
-  const deck = document.getElementById('new-deck').value.trim();
+  const deck = document.getElementById('new-card-deck').value.trim();
   const question = document.getElementById('new-question').value.trim();
   const answer = document.getElementById('new-answer').value.trim();
   const explanation = document.getElementById('new-explanation').value.trim();
   const img_front = document.getElementById('new-img-front').value.trim();
   const img_back = document.getElementById('new-img-back').value.trim();
-  if (!deck || !question || !answer) { showToast('Preencha deck, pergunta e resposta!'); return; }
+  if (!deck) { showToast('Selecione um deck!'); return; }
+  if (!question || !answer) { showToast('Preencha pergunta e resposta!'); return; }
   const btn = document.getElementById('add-btn');
   btn.disabled = true; btn.textContent = 'Salvando…';
   const { error } = await sb.from('flashcards').insert({
@@ -703,7 +1031,7 @@ async function addCard() {
   });
   btn.disabled = false; btn.textContent = 'Adicionar carta →';
   if (error) { showToast('Erro: ' + error.message); return; }
-  ['new-deck','new-question','new-answer','new-explanation','new-img-front','new-img-back'].forEach(id => document.getElementById(id).value = '');
+  ['new-question','new-answer','new-explanation','new-img-front','new-img-back'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('preview-front').style.display = 'none';
   document.getElementById('preview-back').style.display = 'none';
   showToast('✓ Carta adicionada!');
@@ -735,6 +1063,204 @@ async function deleteCard(id) {
   loadManage();
 }
 
+// ── PROFILE ──
+function loadProfileFromStorage() {
+  if (!currentUser) return;
+  const key = `gustanki_profile_${currentUser.id}`;
+  try {
+    const data = JSON.parse(localStorage.getItem(key)) || {};
+    profileAvatar = data.avatar || '';
+    reminders = data.reminders || [];
+    userEvents = data.events || {};
+  } catch { profileAvatar = ''; reminders = []; userEvents = {}; }
+  updateAvatarUI();
+}
+
+function saveProfileToStorage() {
+  if (!currentUser) return;
+  const key = `gustanki_profile_${currentUser.id}`;
+  localStorage.setItem(key, JSON.stringify({ avatar: profileAvatar, reminders, events: userEvents }));
+}
+
+function updateAvatarUI() {
+  const display = document.getElementById('profile-avatar-display');
+  const topAvatar = document.getElementById('user-avatar');
+  const wrap = document.getElementById('profile-avatar-wrap');
+  if (!display) return;
+  if (profileAvatar) {
+    const proxied = imgUrl(profileAvatar);
+    display.innerHTML = `<img src="${proxied}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" />`;
+    topAvatar.innerHTML = `<img src="${proxied}" alt="av" />`;
+  } else {
+    const name = currentUser?.email?.split('@')[0] || '?';
+    display.textContent = name[0].toUpperCase();
+    display.style.fontSize = '2.5rem';
+    topAvatar.textContent = name[0].toUpperCase();
+  }
+}
+
+function saveAvatar() {
+  const url = document.getElementById('avatar-url-input').value.trim();
+  profileAvatar = url;
+  saveProfileToStorage();
+  updateAvatarUI();
+  showToast('✓ Avatar atualizado!');
+}
+
+function initProfile() {
+  const name = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
+  document.getElementById('profile-name-display').textContent = name;
+  document.getElementById('profile-email-display').textContent = currentUser.email;
+  if (profileAvatar) document.getElementById('avatar-url-input').value = profileAvatar;
+  updateAvatarUI();
+  renderReminders();
+  renderCalendar();
+}
+
+// ── REMINDERS ──
+function addReminder() {
+  const input = document.getElementById('new-reminder');
+  const text = input.value.trim();
+  if (!text) return;
+  reminders.unshift({ id: Date.now(), text });
+  saveProfileToStorage();
+  input.value = '';
+  renderReminders();
+}
+
+function deleteReminder(id) {
+  reminders = reminders.filter(r => r.id !== id);
+  saveProfileToStorage();
+  renderReminders();
+}
+
+function renderReminders() {
+  const list = document.getElementById('reminder-list');
+  if (!list) return;
+  if (!reminders.length) {
+    list.innerHTML = `<div style="font-size:.8rem;color:var(--muted);text-align:center;padding:.5rem">Sem lembretes.</div>`;
+    return;
+  }
+  list.innerHTML = reminders.map(r => `
+    <div class="reminder-item">
+      <div class="reminder-dot"></div>
+      <div class="reminder-text">${r.text}</div>
+      <button class="reminder-del" onclick="deleteReminder(${r.id})">✕</button>
+    </div>`).join('');
+}
+
+// ── CALENDAR ──
+const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const DAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  document.getElementById('cal-title').textContent = `${MONTHS_PT[calMonth]} ${calYear}`;
+  const holidays = getBrazilHolidays(calYear);
+  const grid = document.getElementById('cal-grid');
+
+  // Day name headers
+  let html = DAYS_PT.map(d => `<div class="cal-day-name">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+  const today = fmtDate(new Date());
+
+  // Prev month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    html += `<div class="cal-day other-month">${prevDays - i}</div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr === today;
+    const isHoliday = !!holidays[dateStr];
+    const hasEvent = !!(userEvents[dateStr]?.length);
+    const isSelected = dateStr === selectedCalDate;
+    const classes = [
+      'cal-day',
+      isToday ? 'today' : '',
+      isHoliday ? 'holiday' : '',
+      hasEvent ? 'event' : '',
+      isSelected ? 'selected' : '',
+    ].filter(Boolean).join(' ');
+    const dot = hasEvent ? `<span class="cal-dot${isHoliday?' cal-holiday-dot':''}"></span>` : '';
+    html += `<div class="${classes}" onclick="selectCalDate('${dateStr}')">${d}${dot}</div>`;
+  }
+
+  // Next month padding
+  const total = firstDay + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other-month">${i}</div>`;
+  }
+
+  grid.innerHTML = html;
+
+  if (selectedCalDate) renderEventPanel(selectedCalDate, holidays);
+}
+
+function selectCalDate(dateStr) {
+  selectedCalDate = dateStr;
+  renderCalendar();
+}
+
+function renderEventPanel(dateStr, holidays) {
+  if (!holidays) holidays = getBrazilHolidays(calYear);
+  const panel = document.getElementById('event-panel');
+  const dateList = document.getElementById('event-list');
+  const title = document.getElementById('event-panel-date');
+  panel.classList.add('open');
+
+  const [y,m,d] = dateStr.split('-');
+  title.textContent = `${d}/${m}/${y}`;
+
+  const items = [];
+  if (holidays[dateStr]) items.push({ type:'holiday', name: holidays[dateStr] });
+  (userEvents[dateStr]||[]).forEach(e => items.push({ type:'event', name:e.name, id:e.id }));
+
+  if (!items.length) {
+    dateList.innerHTML = `<div style="font-size:.8rem;color:var(--muted)">Nenhum evento nesta data.</div>`;
+  } else {
+    dateList.innerHTML = items.map(item => `
+      <div class="event-item">
+        <span class="ev-type ${item.type}">${item.type === 'holiday' ? 'Feriado' : 'Evento'}</span>
+        <span class="ev-name">${item.name}</span>
+        ${item.id ? `<button class="event-del" onclick="deleteEvent('${dateStr}',${item.id})">✕</button>` : ''}
+      </div>`).join('');
+  }
+}
+
+function addEvent() {
+  const input = document.getElementById('new-event-input');
+  const name = input.value.trim();
+  if (!name || !selectedCalDate) return;
+  if (!userEvents[selectedCalDate]) userEvents[selectedCalDate] = [];
+  userEvents[selectedCalDate].push({ id: Date.now(), name });
+  saveProfileToStorage();
+  input.value = '';
+  renderCalendar();
+}
+
+function deleteEvent(dateStr, id) {
+  userEvents[dateStr] = (userEvents[dateStr]||[]).filter(e => e.id !== id);
+  if (!userEvents[dateStr].length) delete userEvents[dateStr];
+  saveProfileToStorage();
+  renderCalendar();
+}
+
 // ── LIGHTBOX ──
 function openLightbox(e, src) {
   e.stopPropagation();
@@ -758,7 +1284,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeLightbox(); return;
   }
   if (!document.getElementById('view-study').classList.contains('active')) return;
-  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName)) return;
   if (e.code === 'Space') { e.preventDefault(); flipCard(); }
   if (e.code === 'Digit1') rateCard('again');
   if (e.code === 'Digit2') rateCard('hard');
