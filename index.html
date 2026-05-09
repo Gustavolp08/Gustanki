@@ -665,23 +665,13 @@ select option { background:var(--surface2); }
   </div>
 </div>
 
-<!-- ADD DECK -->
+<!-- DECKS (somente gerenciamento — criação é via extensão SAS) -->
 <div class="view" id="view-add-deck">
   <div class="form-card">
-    <div class="form-title">Novo <em>deck</em></div>
-    <div class="form-group">
-      <label>Nome do Deck</label>
-      <input type="text" id="new-deck-name" placeholder="Ex: Matemática, Programação, Idiomas…" />
-    </div>
-    <div class="form-group">
-      <label>Emoji (opcional)</label>
-      <input type="text" id="new-deck-emoji" placeholder="📚" maxlength="2" style="max-width:80px" />
-    </div>
-    <button class="btn-submit" id="add-deck-btn" onclick="addDeck()">Criar deck →</button>
-  </div>
-
-  <div class="form-card">
     <div class="form-title">Seus <em>decks</em></div>
+    <div class="form-subtitle" style="font-size:.82rem;color:var(--muted);margin-bottom:1.2rem">
+      Os decks são criados automaticamente ao salvar questões pela extensão Gustanki no Portal SAS.
+    </div>
     <div class="deck-manager-grid" id="deck-manager-list">
       <div class="loading">Carregando…</div>
     </div>
@@ -878,6 +868,25 @@ function fmtDate(d) {
 
 // ── AUTH STATE ──
 let _authInitialized = false;
+
+// Recarrega dados quando o usuário volta pra aba (ex: vindo do SAS depois de salvar)
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && currentUser) {
+    const activeView = document.querySelector('.view.active');
+    if (activeView && activeView.id === 'view-dashboard') {
+      loadDashboard();
+    }
+  }
+});
+// Também recarrega ao ganhar foco (útil quando o usuário alterna janelas)
+window.addEventListener('focus', () => {
+  if (currentUser) {
+    const activeView = document.querySelector('.view.active');
+    if (activeView && activeView.id === 'view-dashboard') {
+      loadDashboard();
+    }
+  }
+});
 sb.auth.onAuthStateChange(async (_event, session) => {
   if (session?.user) {
     const wasLoggedIn = !!currentUser;
@@ -1258,18 +1267,7 @@ function saveDecksToStorage() {
   localStorage.setItem(key, JSON.stringify(allDecks));
 }
 
-function addDeck() {
-  const name = document.getElementById('new-deck-name').value.trim();
-  const emoji = document.getElementById('new-deck-emoji').value.trim() || '📄';
-  if (!name) { showToast('Digite um nome para o deck!'); return; }
-  if (allDecks.find(d => d.name === name)) { showToast('Já existe um deck com esse nome.'); return; }
-  allDecks.push({ name, emoji });
-  saveDecksToStorage();
-  document.getElementById('new-deck-name').value = '';
-  document.getElementById('new-deck-emoji').value = '';
-  showToast('✓ Deck criado!');
-  loadDeckManager();
-}
+// addDeck() removido — criação de decks é feita via extensão SAS
 
 function deleteDeck(name) {
   const cardCount = allCards.filter(c => c.deck === name).length;
