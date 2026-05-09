@@ -151,9 +151,9 @@ select option { background:var(--surface2); }
 .card-counter { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--muted); }
 
 /* FLASHCARD */
-.flashcard-wrap { perspective:1200px; margin-bottom:1.8rem; }
+.flashcard-wrap { perspective:1200px; margin-bottom:1.8rem; min-height:340px; display:block; }
 .flashcard {
-  width:100%; min-height:340px; position:relative;
+  width:100%; height:340px; min-height:340px; position:relative;
   transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,0,.2,1); cursor:pointer;
 }
 .flashcard.flipped { transform:rotateY(180deg); }
@@ -162,6 +162,7 @@ select option { background:var(--surface2); }
   backface-visibility:hidden; border-radius:var(--radius);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
   padding:2.2rem; text-align:center; border:1px solid var(--border);
+  overflow-y:auto;
 }
 .card-front { background:var(--surface); }
 .card-back { background:var(--surface); transform:rotateY(180deg); border-color:rgba(200,240,96,.3); }
@@ -169,9 +170,13 @@ select option { background:var(--surface2); }
   font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted);
   margin-bottom:1.2rem; padding:.22rem .7rem; border:1px solid var(--border); border-radius:20px;
 }
-.card-question { font-family:'Fraunces',serif; font-size:1.7rem; font-weight:300; line-height:1.3; }
-.card-answer { font-size:1.4rem; font-weight:400; line-height:1.4; color:var(--accent); }
-.card-explanation { font-size:.88rem; color:var(--muted); line-height:1.6; margin-top:.9rem; max-width:500px; }
+.card-question { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:300; line-height:1.4; overflow-y:auto; width:100%; max-height:220px; transition:font-size .2s; }
+.card-answer { font-size:1.2rem; font-weight:400; line-height:1.4; color:var(--accent); overflow-y:auto; width:100%; max-height:180px; transition:font-size .2s; }
+.card-explanation { font-size:.88rem; color:var(--muted); line-height:1.6; margin-top:.9rem; max-width:500px; overflow-y:auto; width:100%; max-height:110px; }
+/* Scrollbars discretas dentro dos cards */
+.card-question::-webkit-scrollbar,.card-answer::-webkit-scrollbar,.card-explanation::-webkit-scrollbar { width:3px; }
+.card-question::-webkit-scrollbar-track,.card-answer::-webkit-scrollbar-track,.card-explanation::-webkit-scrollbar-track { background:transparent; }
+.card-question::-webkit-scrollbar-thumb,.card-answer::-webkit-scrollbar-thumb,.card-explanation::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
 
 /* CARD IMAGE */
 .card-img-wrap { margin:.9rem 0; cursor:zoom-in; border-radius:10px; overflow:hidden; border:1px solid var(--border); max-width:320px; width:100%; }
@@ -1108,8 +1113,14 @@ function deckEmoji(name) {
 
 function renderDecks(decks) {
   const list = document.getElementById('deck-list');
+  // Sincroniza decks vindos dos flashcards do Supabase no storage local
+  loadDecksFromStorage();
+  decks.forEach(name => {
+    if (!allDecks.find(d => d.name === name)) allDecks.push({ name, emoji: DECK_EMOJI[name] || '📄' });
+  });
+  saveDecksToStorage();
   if (!decks.length) {
-    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhum deck ainda.<br>Crie seu primeiro deck na aba <strong>Decks</strong>!</p></div>`;
+    list.innerHTML = `<div class="empty-state"><div class="big">🃏</div><p>Nenhum deck ainda.<br>Salve uma questão via extensão ou crie na aba <strong>Decks</strong>!</p></div>`;
     return;
   }
   const now = Date.now();
@@ -1172,9 +1183,15 @@ function loadCard() {
   document.getElementById('flashcard').classList.remove('flipped');
   document.getElementById('card-deck-tag').textContent = c.deck.toUpperCase();
   document.getElementById('card-deck-tag-back').textContent = c.deck.toUpperCase();
-  document.getElementById('card-question').textContent = c.question;
-  document.getElementById('card-answer').textContent = c.answer;
-  document.getElementById('card-explanation').textContent = c.explanation || '';
+  const qEl = document.getElementById('card-question');
+  const aEl = document.getElementById('card-answer');
+  const expEl = document.getElementById('card-explanation');
+  qEl.textContent = c.question;
+  aEl.textContent = c.answer;
+  expEl.textContent = c.explanation || '';
+  // Ajusta tamanho da fonte baseado no comprimento do texto
+  qEl.style.fontSize = c.question.length > 300 ? '1rem' : c.question.length > 150 ? '1.2rem' : '1.4rem';
+  aEl.style.fontSize = c.answer.length > 200 ? '.95rem' : c.answer.length > 100 ? '1.05rem' : '1.2rem';
   document.getElementById('rating-section').classList.remove('visible');
 
   const fi = imgUrl(c.img_front || '');
