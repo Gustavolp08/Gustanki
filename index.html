@@ -151,27 +151,28 @@ select option { background:var(--surface2); }
 .card-counter { font-family:'DM Mono',monospace; font-size:.8rem; color:var(--muted); }
 
 /* FLASHCARD */
-.flashcard-wrap { perspective:1200px; margin-bottom:1.8rem; min-height:340px; display:block; }
+.flashcard-wrap { perspective:1200px; margin-bottom:1.8rem; min-height:360px; display:block; }
 .flashcard {
-  width:100%; height:340px; min-height:340px; position:relative;
+  width:100%; min-height:360px; position:relative;
   transform-style:preserve-3d; transition:transform .5s cubic-bezier(.4,0,.2,1); cursor:pointer;
 }
 .flashcard.flipped { transform:rotateY(180deg); }
 .card-face {
-  position:absolute; top:0; left:0; right:0; bottom:0; min-height:340px;
+  position:absolute; top:0; left:0; right:0;
+  min-height:360px;
   backface-visibility:hidden; border-radius:var(--radius);
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  padding:2.2rem; text-align:center; border:1px solid var(--border);
+  padding:1.6rem 2rem; text-align:center; border:1px solid var(--border);
   overflow-y:auto;
 }
 .card-front { background:var(--surface); }
-.card-back { background:var(--surface); transform:rotateY(180deg); border-color:rgba(200,240,96,.3); }
+.card-back { background:var(--surface); transform:rotateY(180deg); border-color:rgba(200,240,96,.3); top:0; }
 .card-tag {
   font-size:.7rem; text-transform:uppercase; letter-spacing:.12em; color:var(--muted);
   margin-bottom:1.2rem; padding:.22rem .7rem; border:1px solid var(--border); border-radius:20px;
 }
-.card-question { font-family:'Fraunces',serif; font-size:1.4rem; font-weight:300; line-height:1.4; overflow-y:auto; width:100%; max-height:220px; transition:font-size .2s; }
-.card-answer { font-size:1.2rem; font-weight:400; line-height:1.4; color:var(--accent); overflow-y:auto; width:100%; max-height:180px; transition:font-size .2s; }
+.card-question { font-family:'Fraunces',serif; font-size:1.25rem; font-weight:300; line-height:1.5; width:100%; white-space:pre-wrap; word-break:break-word; transition:font-size .2s; }
+.card-answer { font-size:1.1rem; font-weight:400; line-height:1.5; color:var(--accent); width:100%; white-space:pre-wrap; word-break:break-word; transition:font-size .2s; }
 .card-explanation { font-size:.88rem; color:var(--muted); line-height:1.6; margin-top:.9rem; max-width:500px; overflow-y:auto; width:100%; max-height:110px; }
 /* Scrollbars discretas dentro dos cards */
 .card-question::-webkit-scrollbar,.card-answer::-webkit-scrollbar,.card-explanation::-webkit-scrollbar { width:3px; }
@@ -180,7 +181,7 @@ select option { background:var(--surface2); }
 
 /* CARD IMAGE */
 .card-img-wrap { margin:.9rem 0; cursor:zoom-in; border-radius:10px; overflow:hidden; border:1px solid var(--border); max-width:320px; width:100%; }
-.card-img-wrap img { width:100%; height:180px; object-fit:cover; display:block; transition:opacity .2s; }
+.card-img-wrap img { width:100%; max-height:260px; height:auto; object-fit:contain; display:block; transition:opacity .2s; background:#111; }
 .card-img-wrap:hover img { opacity:.85; }
 
 /* LIGHTBOX */
@@ -1196,16 +1197,20 @@ function startStudy(deck) {
 // ── IMG URL FIX ──
 function imgUrl(url) {
   if (!url) return '';
-  // Convert imgur page links → direct image
-  // Also handle album/gallery links
   let u = url.trim();
+  // Convert imgur page links → direct image
   u = u.replace(/https?:\/\/imgur\.com\/([a-zA-Z0-9]+)$/, 'https://i.imgur.com/$1.jpg');
   u = u.replace(/https?:\/\/imgur\.com\/a\/([a-zA-Z0-9]+).*/, ''); // albums unsupported
-  // Add referrer-friendly proxy if not already direct
-  if (u.includes('i.imgur.com')) {
-    // Use a CORS-friendly approach: proxy through allorigins
-    return `https://wsrv.nl/?url=${encodeURIComponent(u)}&n=-1`;
-  }
+  if (!u) return '';
+  // Proxy todas as imagens externas via wsrv.nl para evitar CORS e hotlink block
+  // (CloudFront do SAS, imgur, qualquer outro domínio)
+  try {
+    const host = new URL(u).hostname;
+    // Não proxia se já é wsrv.nl ou data URI
+    if (host !== 'wsrv.nl' && !u.startsWith('data:')) {
+      return 'https://wsrv.nl/?url=' + encodeURIComponent(u) + '&n=-1';
+    }
+  } catch(e) {}
   return u;
 }
 
@@ -1223,8 +1228,8 @@ function loadCard() {
   aEl.textContent = c.answer;
   expEl.textContent = c.explanation || '';
   // Ajusta tamanho da fonte baseado no comprimento do texto
-  qEl.style.fontSize = c.question.length > 300 ? '1rem' : c.question.length > 150 ? '1.2rem' : '1.4rem';
-  aEl.style.fontSize = c.answer.length > 200 ? '.95rem' : c.answer.length > 100 ? '1.05rem' : '1.2rem';
+  qEl.style.fontSize = c.question.length > 500 ? '.9rem' : c.question.length > 250 ? '1rem' : c.question.length > 150 ? '1.1rem' : '1.25rem';
+  aEl.style.fontSize = c.answer.length > 300 ? '.88rem' : c.answer.length > 150 ? '.95rem' : '1.1rem';
   document.getElementById('rating-section').classList.remove('visible');
 
   const fi = imgUrl(c.img_front || '');
@@ -1240,6 +1245,27 @@ function loadCard() {
   const pct = Math.round((studyIndex / studyQueue.length) * 100);
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('card-counter').textContent = `${studyIndex+1} / ${studyQueue.length}`;
+  // Sync card height so both faces match (needed for 3D flip with dynamic content)
+  syncCardHeight();
+}
+
+function syncCardHeight() {
+  requestAnimationFrame(() => {
+    const front = document.querySelector('.card-front');
+    const back = document.querySelector('.card-back');
+    const wrap = document.querySelector('.flashcard-wrap');
+    if (!front || !back || !wrap) return;
+    // Reset heights to measure natural size
+    front.style.minHeight = '';
+    back.style.minHeight = '';
+    const fh = front.scrollHeight;
+    const bh = back.scrollHeight;
+    const maxH = Math.max(fh, bh, 360);
+    front.style.minHeight = maxH + 'px';
+    back.style.minHeight = maxH + 'px';
+    wrap.style.minHeight = maxH + 'px';
+    document.getElementById('flashcard').style.minHeight = maxH + 'px';
+  });
 }
 
 function flipCard() {
