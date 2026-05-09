@@ -869,9 +869,11 @@ function fmtDate(d) {
 // ── AUTH STATE ──
 let _authInitialized = false;
 
+let _dashboardLoading = false;
+
 // Recarrega dados quando o usuário volta pra aba (ex: vindo do SAS depois de salvar)
 document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && currentUser) {
+  if (!document.hidden && currentUser && !_dashboardLoading) {
     const activeView = document.querySelector('.view.active');
     if (activeView && activeView.id === 'view-dashboard') {
       loadDashboard();
@@ -880,7 +882,7 @@ document.addEventListener('visibilitychange', () => {
 });
 // Também recarrega ao ganhar foco (útil quando o usuário alterna janelas)
 window.addEventListener('focus', () => {
-  if (currentUser) {
+  if (currentUser && !_dashboardLoading) {
     const activeView = document.querySelector('.view.active');
     if (activeView && activeView.id === 'view-dashboard') {
       loadDashboard();
@@ -945,8 +947,11 @@ async function logout() { await sb.auth.signOut(); }
 
 // ── LOAD DATA ──
 async function loadDashboard() {
+  if (_dashboardLoading) return;
+  _dashboardLoading = true;
+  try {
   const { data, error } = await sb.from('flashcards').select('*').eq('user_id', currentUser.id);
-  if (error) { showToast('Erro ao carregar cards'); return; }
+  if (error) { showToast('Erro ao carregar cards'); _dashboardLoading = false; return; }
   allCards = data || [];
 
   const now = Date.now();
@@ -963,6 +968,9 @@ async function loadDashboard() {
   renderStreakUI();
   renderHeatmap();
   loadRanking();
+  } finally {
+    _dashboardLoading = false;
+  }
 }
 
 function renderStreakUI() {
@@ -1111,6 +1119,13 @@ async function loadRanking() {
     list.innerHTML = `<div style="font-size:.75rem;color:var(--muted);padding:.5rem;line-height:1.5">Crie a tabela <code>streaks</code> no Supabase para ativar o ranking.</div>`;
   }
 }
+const DECK_EMOJI = {
+  'Programação':'💻','Matemática':'📐','História':'📜','Idiomas':'🌍',
+  'Ciências':'🔬','Geral':'📚','Física':'⚡','Química':'🧪','Biologia':'🌿',
+  'Português':'📝','Geografia':'🗺️','Inglês':'🇬🇧','SAS Biologia':'🌿',
+  'SAS Física':'⚡','SAS Química':'🧪','SAS Matemática':'📐','SAS História':'📜',
+  'SAS Português':'📝','SAS Geografia':'🗺️','SAS Inglês':'🇬🇧'
+};
 const DECK_COLOR = { 'Programação':'rgba(96,208,240,.15)','Matemática':'rgba(200,240,96,.15)','História':'rgba(240,184,96,.15)','Idiomas':'rgba(96,240,160,.15)','Ciências':'rgba(240,96,240,.15)','Geral':'rgba(200,200,200,.08)' };
 
 function deckEmoji(name) {
